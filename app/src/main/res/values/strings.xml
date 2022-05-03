@@ -1,0 +1,38 @@
+<resources>
+    <string name="app_name">MOB</string>
+    <string name="no_product">No product connected</string>
+    <string name="server_ip">No server connected</string>
+    <string name="server_disc">Server disconnected</string>
+    <string name="sdk_version">SDK Version: %1$s</string>
+    <string name="product_name">Product Name: %1$s</string>
+    <string name="remote_controller">Remote Controller Only</string>
+    <string name="unregistered">Unregistered</string>
+    <string name="registered">Registered</string>
+    <string name="logs">Logs</string>
+    <string name="showcase">Showcase</string>
+    <string name="widget_list">Widget List</string>
+    <string name="default_layout">Default Layout</string>
+    <string name="map">Map</string>
+    <string name="camera_view">Camera View</string>
+
+
+    <string name="my_pref">my_pref</string>
+    <string name="speed_waypoint">speed_wp</string>
+    <string name="latitude">latitude</string>
+    <string name="longitude">longitude</string>
+    <string name="altitude">altitude</string>
+
+    <string name="latitude_up">latitudeUpdate</string>
+    <string name="longitude_up">longitudeUpdate</string>
+
+    <string name="latitude_fm">latitude follow</string>
+    <string name="longitude_fm">longitude follow</string>
+    <string name="altitude_fm">altitude follow</string>
+
+    <string name="latitude_pos">latitude hotpoint</string>
+    <string name="longitude_pos">longitude hotpoint</string>
+    <string name="altitude_pos">altitude hotpoint</string>
+    <string name="radius_pos">radius hotpoint</string>
+    <string name="search">search</string>
+
+</resources>

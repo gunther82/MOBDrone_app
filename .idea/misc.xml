@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="DesignSurface">
+    <option name="filePathToZoomLevelMap">
+      <map>
+        <entry key="app/src/main/res/layout/activity_camera.xml" value="0.5385814497272019" />
+        <entry key="app/src/main/res/layout/activity_camera_backup.xml" value="0.41383495145631066" />
+        <entry key="app/src/main/res/layout/activity_live_stream.xml" value="0.4077669902912621" />
+        <entry key="app/src/main/res/layout/activity_main.xml" value="0.3155339805825243" />
+      </map>
+    </option>
+  </component>
+  <component name="ProjectRootManager" version="2" languageLevel="JDK_11" project-jdk-name="9" project-jdk-type="JavaSDK">
+    <output url="file://$PROJECT_DIR$/build/classes" />
+  </component>
+  <component name="ProjectType">
+    <option name="id" value="Android" />
+  </component>
+</project>
