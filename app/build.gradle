@@ -116,6 +116,7 @@ dependencies {
          */
         // exclude group: 'com.amap.api'
     })
+fis    implementation 'androidx.test.ext:junit:1.1.3'
     compileOnly ('com.dji:dji-sdk-provided:4.16.1')
 
     //UXSDK MOBILE HERE
