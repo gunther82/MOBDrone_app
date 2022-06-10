@@ -12,7 +12,6 @@ import android.content.SharedPreferences;
 import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
-import android.os.Message;
 import android.util.Log;
 
 import androidx.annotation.Nullable;
@@ -22,6 +21,7 @@ import androidx.core.content.res.ResourcesCompat;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import com.dji.ux.beta.sample.R;
+import com.dji.ux.beta.sample.cameraview.CameraActivity;
 import com.dji.ux.beta.sample.mission.GPSPlancia;
 import com.dji.ux.beta.sample.utils.DroneState;
 
@@ -29,7 +29,6 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
-import java.io.UnsupportedEncodingException;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -71,7 +70,6 @@ public class TcpClientService extends Service {
 
     private final Runnable runnable = new Runnable() {
         //TODO: connettere tramite pulsante
-        //TODO: leggere i messaggi dal broadcast receiver
 
         @RequiresApi(api = Build.VERSION_CODES.N)
         @Override
@@ -275,6 +273,15 @@ public class TcpClientService extends Service {
             case "waypoint_speed":
                 setSpeed(editor);
                 break;
+            case "interdiction_area":
+                setInterdictionRadius(editor);
+                break;
+            case "warning":
+                //TODO: show popup or alert
+                break;
+            case "next_target":
+                //TODO: skip current target and resume search
+                break;
             case "waypoint_coordinates":
                 //setCoordinate(editor);
                 request[1] = request[1].replace(",", ".");
@@ -309,6 +316,24 @@ public class TcpClientService extends Service {
             editor.putFloat(getString(R.string.speed_waypoint), speed);
             editor.apply();
             fromServiceToActivity(ACTION, KEY, "speed_wp");
+        }
+    }
+
+    private void setInterdictionRadius(SharedPreferences.Editor editor){
+        Log.i(TAG, "interdiction_area " + request[1]);
+        if(isNumeric(request[1])){
+            CameraActivity.setInterdictionRadius(Float.parseFloat(request[1]));
+//            float interdictionArea = Float.parseFloat(request[1]);
+//            editor.putFloat(getString(R.string.interdiction_area), interdictionArea);
+//            editor.apply();
+//            fromServiceToActivity(ACTION, KEY, "interdiction_area");
+        }
+        else {
+            try {
+                outputStream.write(("Incorrect or null interdiction_area value! Please send a numeric value\n").getBytes(StandardCharsets.UTF_8));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
     }
 

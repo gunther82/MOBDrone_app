@@ -59,7 +59,7 @@ public class GPSPlancia {
         return distance >= distanceMeters;
     }
 
-    public static List<GPSPlancia> getCleanedGPSList(){
+    public static List<GPSPlancia> getCleanedGPSList(double interdictionRadius){
         Log.i(TAG, "Initial GPS list length: " + getGPSPlanciaList().size());
         List<GPSPlancia> cleanedList = new ArrayList<>();
         if(!getGPSPlanciaList().isEmpty()){
@@ -67,7 +67,7 @@ public class GPSPlancia {
             LatLng oldPos = new LatLng((getGPSPlanciaList().get(0).getLatitude()), cleanedList.get(0).getLongitude());
             for (GPSPlancia gps: getGPSPlanciaList()) {
                 LatLng currentPos = new LatLng(gps.getLatitude(), gps.getLongitude());
-                if(checkPosDistance(oldPos, currentPos, 20.0)){
+                if(checkPosDistance(oldPos, currentPos, interdictionRadius)){
                     cleanedList.add(gps);
                     oldPos = currentPos;
                 }

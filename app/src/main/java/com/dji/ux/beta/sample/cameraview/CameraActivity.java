@@ -47,7 +47,6 @@ import com.google.maps.android.SphericalUtil;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -111,7 +110,7 @@ public class CameraActivity extends AppCompatActivity {
     private CompositeDisposable compositeDisposable;
     private UserAccountLoginWidget userAccountLoginWidget;
     private int dialogCount = 0;
-    private final double radiusInMeters = 20.0;
+    private static double interdictionRadius = 20.0;
     private DJICircle mCircle;
     private LatLng centerRadius;
     private LatLng currentPersonPos;
@@ -129,10 +128,7 @@ public class CameraActivity extends AppCompatActivity {
 
     //TODO: settare button a non clickable quando drone non connesso
     //TODO: sistemare le icone nella top bar (troppo piccole)
-    //TODO: mostrare tutti i toast sfruttando metodo setResultToast
-    //TODO: instance.setAutoFlightSpeed();
     //TODO: setExitMissionOnRCSignalLostEnabled(boolean enabled)
-    //TODO: metodo stile fromActivitytoService per notificare la plancia degli stati della missione
     //TODO: far scegliere angolo gimbalpitch
 
 
@@ -227,7 +223,7 @@ public class CameraActivity extends AppCompatActivity {
             Log.i(TAG, "homeLocation " + centerRadius.toString());
             DJILatLng latLng = new DJILatLng(centerRadius.latitude, centerRadius.longitude);
             DJICircleOptions circleOptions = new DJICircleOptions().center(latLng)
-                    .radius(radiusInMeters).fillColor(getResources().getColor(R.color.background_blue))
+                    .radius(interdictionRadius).fillColor(getResources().getColor(R.color.background_blue))
                     .strokeColor(getResources().getColor(R.color.background_blue)).strokeWidth(8);
             mCircle = mapWidget.getMap().addSingleCircle(circleOptions);
             map.setOnMapClickListener(new DJIMap.OnMapClickListener() {
@@ -352,7 +348,7 @@ public class CameraActivity extends AppCompatActivity {
         if(mapWidget.getMap()!=null){
             DJILatLng latLng = new DJILatLng(latitude, longitude);
             DJICircleOptions circleOptions = new DJICircleOptions().center(latLng)
-                    .radius(radiusInMeters).fillColor(shadeColor).strokeColor(strokeColor).strokeWidth(8);
+                    .radius(interdictionRadius).fillColor(shadeColor).strokeColor(strokeColor).strokeWidth(8);
             mapWidget.getMap().addMarker(new DJIMarkerOptions()
                     .position(latLng)
                     .icon(bitmapDescriptorFromVector(this, vector)));
@@ -360,11 +356,11 @@ public class CameraActivity extends AppCompatActivity {
         }
     }
 
-    private void handleWPMissionButton(){
+    private void handleWPMissionButton(double interdictionRadius){
         if(mPointMission.getWaypointMissionState().equals(WaypointMissionState.EXECUTING.toString())){
             Toast.makeText(this, "Search already running!", Toast.LENGTH_SHORT).show();
         } else {
-            List<GPSPlancia> cleanedList = GPSPlancia.getCleanedGPSList();
+            List<GPSPlancia> cleanedList = GPSPlancia.getCleanedGPSList(interdictionRadius);
             drawWayPoint(cleanedList);
             mPointMission.createWaypointFromList(cleanedList);
             mPointMission.configWaypointMission(waypointSpeed);
@@ -415,7 +411,7 @@ public class CameraActivity extends AppCompatActivity {
     private boolean ckeckPersonInRadius(LatLng oldPos, LatLng newPos){
         double distanceMeters = SphericalUtil.computeDistanceBetween(oldPos, newPos);
 
-        if(distanceMeters < radiusInMeters){
+        if(distanceMeters < interdictionRadius){
             Toast.makeText(this, "Found person in no-go zone", Toast.LENGTH_SHORT).show();
             return false;
         } else {
@@ -453,8 +449,11 @@ public class CameraActivity extends AppCompatActivity {
         });
     }
 
+    public static void setInterdictionRadius(double interdictionRadius) {
+        interdictionRadius = interdictionRadius;
+    }
+
     private void handleMission(String action){
-        //TODO:eliminare cooridnare/upload
         switch (action) {
             case "speed_wp":
                 waypointSpeed = sharedPreferences.getFloat(getString(R.string.speed_waypoint), 0.0f);
@@ -476,7 +475,7 @@ public class CameraActivity extends AppCompatActivity {
                 Log.i(TAG, "upload_mission " + mPointMission.getWaypointMissionState());
                 break;
             case "start_waypoint_list":
-                handleWPMissionButton();
+                handleWPMissionButton(interdictionRadius);
                 Log.i(TAG, "start_mission " + mPointMission.getWaypointMissionState());
                 fromActivityToService("Mission State: " + mPointMission.getWaypointMissionState());
                 break;

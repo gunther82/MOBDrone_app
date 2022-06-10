@@ -98,6 +98,7 @@ public class PointMission {
             if(waypointMissionExecutionEvent.getProgress().isWaypointReached){
                 wayPointCount++;
                 Log.i(TAG, "Waypoint reached " + wayPointCount);
+                //TODO capire perche' conta i waypoint a 2 a 2 anziche' uno alla volta
             }
 
         }
@@ -135,6 +136,7 @@ public class PointMission {
         }
     }
 
+    //TODO old, check if can be removed
     public void createWaypoint(SharedPreferences preferences){
 
         double latitude = Double.parseDouble(preferences.getString(mContext.getString(R.string.latitude), ""));
@@ -304,6 +306,7 @@ public class PointMission {
     public void deleteWPCount(){
         if(wayPointCount>0 && !waypointMissionBuilder.getWaypointList().isEmpty()){
             waypointMissionBuilder.getWaypointList().subList(0, wayPointCount/2).clear();
+            //TODO capire perche' serve il /2
         }
     }
 }

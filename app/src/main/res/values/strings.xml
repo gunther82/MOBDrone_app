@@ -18,6 +18,7 @@
 
     <string name="my_pref">my_pref</string>
     <string name="speed_waypoint">speed_wp</string>
+    <string name="interdiction_area">interdiction_area</string>
     <string name="latitude">latitude</string>
     <string name="longitude">longitude</string>
     <string name="altitude">altitude</string>
