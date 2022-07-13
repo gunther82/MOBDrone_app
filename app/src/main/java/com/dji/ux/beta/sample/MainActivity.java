@@ -98,9 +98,6 @@ public class MainActivity extends AppCompatActivity {
     private static final String TAG = "MainActivity";
     private static final String ACTION = "FROM_MAIN";
 
-    private static boolean CONSOLE_ENABLED = true;
-    private static double INTERDICTION_RADIUS = 20.0;
-
     //TODO: eliminare broadcast receiver e prendere indirizzo ip server dallo shared preference
     //TODO: inviare al server stato iniziale connessione del drone
     //TODO: applicazione crasha se Bluetooth acceso (Android 12 bug)

@@ -5,6 +5,7 @@ Util class that provides info onm drone status such as battery charge, altitude,
  */
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.drawable.Drawable;
@@ -15,6 +16,7 @@ import androidx.core.content.ContextCompat;
 
 import com.dji.mapkit.core.models.DJIBitmapDescriptor;
 import com.dji.mapkit.core.models.DJIBitmapDescriptorFactory;
+import com.dji.ux.beta.sample.R;
 import com.dji.ux.beta.sample.SampleApplication;
 import com.dji.ux.beta.sample.mission.GPSPlancia;
 import com.google.android.gms.maps.model.LatLng;
@@ -55,6 +57,7 @@ public class DroneState {
     protected static int batteryCharge;
     private static FlightController flightController;
     private static String tracking;
+    private static String searching;
     private static String following;
     private static String serialNumber;
     private static String speed;
@@ -97,9 +100,9 @@ public class DroneState {
                             longitude = String.valueOf(flightControllerState.getAircraftLocation().getLongitude());
                             altitude = String.valueOf(flightControllerState.getAircraftLocation().getAltitude());
                         } else {
-                            latitude = "No GPS";
-                            longitude = "No GPS";
-                            latitude = "No GPS";
+                            latitude = "0.0";
+                            longitude = "0.0";
+                            latitude = "0.0";
                         }
                     }
                 }
@@ -123,8 +126,9 @@ public class DroneState {
     public static void setTracking(){
         whichLatitude = "Drone Latitude: ";
         //tracking = DJISDKManager.getInstance().getMissionControl().getWaypointMissionOperator().getCurrentState().toString();
-        tracking = DJISDKManager.getInstance().getMissionControl().getWaypointMissionOperator().getCurrentState().toString();
-        if(tracking.equals("EXECUTING")){
+        tracking = DJISDKManager.getInstance().getMissionControl().getHotpointMissionOperator().getCurrentState().toString();
+        searching = DJISDKManager.getInstance().getMissionControl().getWaypointMissionOperator().getCurrentState().toString();
+        if(searching.equals("EXECUTING")){
             whichLatitude = "Searching Drone Latitude: ";
         }
         following = DJISDKManager.getInstance().getMissionControl().getFollowMeMissionOperator().getCurrentState().toString();
@@ -179,7 +183,7 @@ public class DroneState {
         return stringStream;
     }
 
-    public static StringBuilder getDroneStatePlancia(){
+    public static StringBuilder getDroneStatePlancia(boolean disableConsole){
         BaseProduct product = SampleApplication.getProductInstance();
         if (product != null && product.isConnected()) {
 
@@ -188,15 +192,29 @@ public class DroneState {
             setTracking();
             getRealTimeData();
             stringStatePlancia.delete(0, stringStatePlancia.length());
-            stringStatePlancia.append("\n");
-            stringStatePlancia.append("True").append("#");
+//            stringStatePlancia.append("\n");
+            stringStatePlancia.append("true").append("#");
+            stringStatePlancia.append(disableConsole).append("#");
             stringStatePlancia.append(batteryCharge).append("#");
             stringStatePlancia.append(speed).append("#");
+//            stringStatePlancia.append("0").append("#");
             stringStatePlancia.append(altitude).append("#");
             stringStatePlancia.append(latitude).append("#");
             stringStatePlancia.append(longitude).append("#");
-            stringStatePlancia.append(tracking).append("#");
-            stringStatePlancia.append(following).append("#");
+            if(tracking != null && tracking.equals("EXECUTING"))
+                stringStatePlancia.append("true").append("#");
+            else
+                stringStatePlancia.append("false").append("#");
+
+            if(following != null && following.equals("EXECUTING"))
+                stringStatePlancia.append("true").append("#");
+            else
+                stringStatePlancia.append("false").append("#");
+
+            if(searching != null && searching.equals("EXECUTING"))
+                stringStatePlancia.append("true").append("#");
+            else
+                stringStatePlancia.append("false").append("#");
             if(DJISDKManager.getInstance().getLiveStreamManager().isStreaming()) {
                 stringStatePlancia.append(DJISDKManager.getInstance().getLiveStreamManager().getLiveUrl()).append("#");
             } else {
@@ -231,7 +249,8 @@ public class DroneState {
     // gets real time flight data of the aircraft with the given serial number
     private static void getRealTimeData() {
         //TODO:se non va togliere commento
-        //if (product instanceof Aircraft) { flightController = ((Aircraft) product).getFlightController(); }
+        BaseProduct product = SampleApplication.getProductInstance();
+        if (product instanceof Aircraft) { flightController = ((Aircraft) product).getFlightController(); }
         flightController.getSerialNumber(new CommonCallbacks.CompletionCallbackWith<String>() {
             @Override
             public void onSuccess(String s) {
@@ -245,6 +264,13 @@ public class DroneState {
         });
         final ArrayList<String> serialNumbers = new ArrayList<>(1);
         serialNumbers.add(serialNumber);
+
+//        String velX = Float.toString(flightController.getState().getVelocityX());
+//        String velY = Float.toString(flightController.getState().getVelocityY());
+//        String velZ = Float.toString(flightController.getState().getVelocityZ());
+//        speed = velX + ":" + velY + ":" + velZ;
+//        Log.i(TAG, "speed " + s.getSpeed());
+
         try {
             DJISDKManager.getInstance().getFlightHubManager().getAircraftRealTimeFlightData(serialNumbers, new CommonCallbacks.CompletionCallbackWith<List<RealTimeFlightData>>() {
                 @Override

@@ -86,7 +86,7 @@ public class PosMission {
             double latitude = Double.parseDouble(preferences.getString(mContext.getString(R.string.latitude_pos), ""));
             double longitude = Double.parseDouble(preferences.getString(mContext.getString(R.string.longitude_pos), ""));
             double altitude = Double.parseDouble(preferences.getString(mContext.getString(R.string.altitude_pos), ""));
-            double radius = Double.parseDouble(preferences.getString(mContext.getString(R.string.radius_pos), ""));
+            double radius = Double.parseDouble(preferences.getString(mContext.getString(R.string.radius_pos), "5.0"));
             float angularVel = 20.0f;
 
             HotpointMission mHotpointMission = new HotpointMission(new LocationCoordinate2D(latitude, longitude), altitude, radius,

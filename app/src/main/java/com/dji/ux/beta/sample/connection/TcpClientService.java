@@ -13,6 +13,7 @@ import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
 import android.util.Log;
+import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
@@ -46,10 +47,13 @@ public class TcpClientService extends Service {
     //public final String _ip = "192.168.108.36"; //hotspot
     //public final String _ip = "192.168.1.10"; //casa
     //public final String _ip = "192.168.1.16"; //python jetson
-    public final String _ip = "192.168.1.104"; //localhost
+//    public final String _ip = "192.168.1.103"; //console
+    public final String _ip = "192.168.200.185"; //console
     //public final String _ip = "192.168.1.105"; //localhost plancia
-    private final String port = "11000";
-    private final String TAG = TcpClientService.class.getSimpleName();
+//    private final String port = "11000";
+    private final String port = "8089";
+//    private final String TAG = TcpClientService.class.getSimpleName();
+    private final String TAG = "TcpClientService";
     Boolean isconnectBoolean = false;
 
     Boolean isconnectBooleanJetson = false;
@@ -57,7 +61,8 @@ public class TcpClientService extends Service {
     private Thread connectThreadJetson;
     BufferedReader bufferedReaderJetson; //Declare the input stream object
     OutputStream outputStreamJetson; //Declare the output stream object
-    public final String _ipJetson = "192.168.1.100"; //python jetson
+//    public final String _ipJetson = "192.168.1.100"; //python jetson
+    public final String _ipJetson = "192.168.200.22"; //python jetson
     private final String portJetson = "65432"; //port python
 
     private String[] request;
@@ -75,7 +80,7 @@ public class TcpClientService extends Service {
         @Override
         public void run() {
             try {
-
+                sharedPreferences = getSharedPreferences(getString(R.string.my_pref), Context.MODE_PRIVATE);
                 socket = new Socket(_ip, Integer.parseInt(port));
 
                 bufferedReader=new BufferedReader(new InputStreamReader(socket.getInputStream()));
@@ -89,9 +94,9 @@ public class TcpClientService extends Service {
                     Log.i(TAG, "Connected to " + _ip);
                     fromServiceToActivity("IP", "server_ip", "Connected to " + _ip);
 
-                    outputStream.write((message +"\n").getBytes(StandardCharsets.UTF_8));
-                    //The output stream is sent to the server
-                    outputStream.flush();
+//                    outputStream.write((message +"\n").getBytes(StandardCharsets.UTF_8));
+//                    //The output stream is sent to the server
+//                    outputStream.flush();
 
                     //while (bufferedReader.read(buffer) >0){
                     String line;
@@ -104,10 +109,12 @@ public class TcpClientService extends Service {
                         //Log.i(TAG, message);
 
                         if(bufferString.toString().equals("status")){
-                            StringBuilder bufferStatus = DroneState.getDroneStatePlancia();
+                            boolean disableConsole = sharedPreferences.getBoolean(getString(R.string.disableConsole), false);
+                            StringBuilder bufferStatus = DroneState.getDroneStatePlancia(disableConsole);
                             //StringBuilder bufferStatus = DroneState.getDroneState();
                             //bufferStatus.append("\n").append(DroneState.getStreamInfo());
-                            Log.i(TAG, "State: " + bufferStatus.toString());
+                            //TODO status string
+//                            Log.i(TAG, "State: " + bufferStatus.toString());
                             outputStream.write((bufferStatus.toString()).getBytes(StandardCharsets.UTF_8));
                             outputStream.flush();
                         }
@@ -150,8 +157,8 @@ public class TcpClientService extends Service {
 
                     Log.i(TAG, "Connected to " + _ipJetson);
                     fromServiceToActivity("IP", "jetson_ip", "Jetson connected");
-                    outputStreamJetson.write((messageJetson +"\n").getBytes(StandardCharsets.UTF_8));
-                    outputStreamJetson.flush();
+//                    outputStreamJetson.write((messageJetson +"\n").getBytes(StandardCharsets.UTF_8));
+//                    outputStreamJetson.flush();
 
                     String line;
                     while ((line=bufferedReaderJetson.readLine()) != null){
@@ -160,7 +167,7 @@ public class TcpClientService extends Service {
 
                         if(bufferStringJetson.toString().equals("gps")){
                             StringBuilder bufferStatus = DroneState.getGPSJetson();
-                            Log.i(TAG, "Jetson gps: " + bufferStatus.toString());
+//                            Log.i(TAG, "Jetson gps: " + bufferStatus.toString());
                             //outputStreamJetson.write((bufferStatus.toString()).getBytes(StandardCharsets.UTF_8));
                             //outputStreamJetson.flush();
                             sendMessageJetson(bufferStatus.toString());
@@ -267,8 +274,15 @@ public class TcpClientService extends Service {
     private void handleRequest(String req){
         sharedPreferences = this.getSharedPreferences(getString(R.string.my_pref), Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = sharedPreferences.edit();
-        Log.i(TAG, "Received " + req);
+        if(!req.equals("gps") && !req.equals("") && !req.equals("status"))
+            Log.i(TAG, "Received " + req);
         request = req.split("-");
+
+        boolean disableConsole = sharedPreferences.getBoolean(getString(R.string.disableConsole), false);
+        if(disableConsole && !request[0].startsWith("hotpoint_jetson")) {
+            return;
+        }
+
         switch (request[0]){
             case "waypoint_speed":
                 setSpeed(editor);
@@ -277,7 +291,7 @@ public class TcpClientService extends Service {
                 setInterdictionRadius(editor);
                 break;
             case "warning":
-                //TODO: show popup or alert
+                setWarning(editor);
                 break;
             case "next_target":
                 //TODO: skip current target and resume search
@@ -295,7 +309,7 @@ public class TcpClientService extends Service {
                 break;
             case "update_coordinates":
                 updateFMCoordinate(editor);
-                //fromServiceToActivity(ACTION, KEY, "start_follow"); //TODO: cambiare MSG
+                //fromServiceToActivity(ACTION, KEY, "start_follow"); //TODO: cambiare MSG, serve un msg?
                 break;
             case "hotpoint_coordinates":
                 setHotCoordinate(editor);
@@ -303,6 +317,7 @@ public class TcpClientService extends Service {
                 break;
             case "hotpoint_jetson":
                 setHotCoordinate(editor);
+                //TODO: check if it is needed fromServiceToActivity() here too
                 break;
             default:
                 fromServiceToActivity(ACTION, KEY, request[0]);
@@ -320,12 +335,13 @@ public class TcpClientService extends Service {
     }
 
     private void setInterdictionRadius(SharedPreferences.Editor editor){
-        Log.i(TAG, "interdiction_area " + request[1]);
+        Log.i(TAG, "New interdiction_area " + request[1]);
         if(isNumeric(request[1])){
-            CameraActivity.setInterdictionRadius(Float.parseFloat(request[1]));
-//            float interdictionArea = Float.parseFloat(request[1]);
-//            editor.putFloat(getString(R.string.interdiction_area), interdictionArea);
-//            editor.apply();
+//            CameraActivity.setInterdictionRadius(Float.parseFloat(request[1]));
+
+            float interdictionArea = Float.parseFloat(request[1]);
+            editor.putFloat(getString(R.string.interdiction_area), interdictionArea);
+            editor.apply();
 //            fromServiceToActivity(ACTION, KEY, "interdiction_area");
         }
         else {
@@ -335,6 +351,13 @@ public class TcpClientService extends Service {
                 e.printStackTrace();
             }
         }
+    }
+
+    private void setWarning(SharedPreferences.Editor editor){
+        Log.i(TAG, "warning " + request[1]);
+        editor.putString(getString(R.string.warning), request[1]);
+        editor.apply();
+        fromServiceToActivity(ACTION, KEY, "warning");
     }
 
     private void setCoordinate(SharedPreferences.Editor editor){
@@ -360,6 +383,7 @@ public class TcpClientService extends Service {
     }
 
     private void updateFMCoordinate(SharedPreferences.Editor editor){
+        //TODO check if the replace is needed or not
         request[1] = request[1].replace(",", ".");
         request[2] = request[2].replace(",", ".");
         editor.putString(getString(R.string.latitude_fm), request[1]);
@@ -417,7 +441,7 @@ public class TcpClientService extends Service {
             public void run() {
                 try  {
                     if(outputStreamJetson!=null){
-                        Log.i(TAG, "sending to jetson" + msg);
+//                        Log.i(TAG, "sending to jetson" + msg);
                         outputStreamJetson.write((msg + "\n").getBytes(StandardCharsets.UTF_8));
                         outputStreamJetson.flush();
                     }

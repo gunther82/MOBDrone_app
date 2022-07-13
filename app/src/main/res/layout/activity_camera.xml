@@ -16,6 +16,47 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:uxsdk_onStateChange="@+id/widget_fpv_interaction" >
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_alignParentBottom="true"
+            android:layout_margin="0dp"
+            android:background="@color/transparent"
+            android:gravity="center_vertical|end"
+            android:orientation="vertical">
+
+            <com.google.android.material.floatingactionbutton.FloatingActionButton
+                android:id="@+id/disableConsoleBtn"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_margin="16dp"
+                android:contentDescription="@string/disableConsole"
+                app:backgroundTint="@color/colorFont"
+                app:fabSize="normal"
+                app:srcCompat="@drawable/uxsdk_ic_config_internal_normal" />
+
+            <com.google.android.material.floatingactionbutton.FloatingActionButton
+                android:id="@+id/streamBtn"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_margin="16dp"
+                android:contentDescription="@string/live"
+                app:backgroundTint="@color/colorFont"
+                app:fabSize="normal"
+                app:srcCompat="@drawable/baseline_cast_white_36" />
+
+            <com.google.android.material.floatingactionbutton.FloatingActionButton
+                android:id="@+id/searchBtn"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_margin="16dp"
+                android:contentDescription="@string/search"
+                app:backgroundTint="@color/colorFont"
+                app:fabSize="normal"
+                app:srcCompat="@drawable/ic_start_search" />
+
+        </LinearLayout>
     </dji.ux.beta.core.widget.fpv.FPVWidget>
 
     <View
@@ -138,16 +179,15 @@
         android:id="@+id/stopSearch"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="130dp"
         android:layout_marginStart="12dp"
         android:layout_marginBottom="5dp"
+        android:contentDescription="@string/stop"
         app:backgroundTint="@color/colorFont"
-        app:srcCompat="@drawable/uxsdk_ic_stop_record_video"
+        app:fabSize="normal"
         app:layout_constraintBottom_toTopOf="@+id/widget_take_off"
-        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintDimensionRatio="@string/uxsdk_widget_default_ratio"
-        android:contentDescription="stop_search"
-        app:fabSize="normal"/>
+        app:layout_constraintStart_toStartOf="parent"
+        app:srcCompat="@drawable/uxsdk_ic_stop_record_video" />
 
     <dji.ux.beta.flight.widget.takeoff.TakeOffWidget
         android:id="@+id/widget_take_off"
@@ -176,39 +216,6 @@
         app:layout_constraintHeight_percent="0.1"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/widget_take_off" />
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_margin="0dp"
-        android:layout_alignParentBottom="true"
-        android:background="@color/transparent"
-        android:orientation="vertical"
-        android:gravity="center_vertical|end"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
-
-        <com.google.android.material.floatingactionbutton.FloatingActionButton
-            android:id="@+id/streamBtn"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_margin="16dp"
-            app:backgroundTint="@color/colorFont"
-            app:srcCompat="@drawable/baseline_cast_white_36"
-            android:contentDescription="live"
-            app:fabSize="normal" />
-
-        <com.google.android.material.floatingactionbutton.FloatingActionButton
-            android:id="@+id/searchBtn"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_margin="16dp"
-            app:backgroundTint="@color/colorFont"
-            app:srcCompat="@drawable/ic_start_search"
-            android:contentDescription="@string/search"
-            app:fabSize="normal" />
-
-    </LinearLayout>
 
     <dji.ux.beta.core.panel.systemstatus.SystemStatusListPanelWidget
         android:id="@+id/widget_panel_system_status_list"

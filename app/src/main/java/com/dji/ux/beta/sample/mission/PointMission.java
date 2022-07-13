@@ -257,7 +257,7 @@ public class PointMission {
     }
 
     public void resumeWaypointMission(){
-        if (getWaypointMissionState().equals(WaypointMissionState.EXECUTING.toString())){
+        if (getWaypointMissionState().equals(WaypointMissionState.EXECUTION_PAUSED.toString())){
             getWaypointM().resumeMission(new CommonCallbacks.CompletionCallback() {
                 @Override
                 public void onResult(DJIError djiError) {
