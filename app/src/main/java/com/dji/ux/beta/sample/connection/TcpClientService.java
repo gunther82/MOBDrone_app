@@ -47,11 +47,11 @@ public class TcpClientService extends Service {
     //public final String _ip = "192.168.108.36"; //hotspot
     //public final String _ip = "192.168.1.10"; //casa
     //public final String _ip = "192.168.1.16"; //python jetson
-//    public final String _ip = "192.168.1.103"; //console
-    public final String _ip = "192.168.200.185"; //console
+    public final String _ip = "192.168.1.103"; //console
+//    public final String _ip = "192.168.200.185"; //console livorno
     //public final String _ip = "192.168.1.105"; //localhost plancia
-//    private final String port = "11000";
-    private final String port = "8089";
+    private final String port = "11000";
+//    private final String port = "8089"; //porta console livorno
 //    private final String TAG = TcpClientService.class.getSimpleName();
     private final String TAG = "TcpClientService";
     Boolean isconnectBoolean = false;
@@ -61,8 +61,8 @@ public class TcpClientService extends Service {
     private Thread connectThreadJetson;
     BufferedReader bufferedReaderJetson; //Declare the input stream object
     OutputStream outputStreamJetson; //Declare the output stream object
-//    public final String _ipJetson = "192.168.1.100"; //python jetson
-    public final String _ipJetson = "192.168.200.22"; //python jetson
+    public final String _ipJetson = "192.168.1.100"; //python jetson
+//    public final String _ipJetson = "192.168.200.22"; //python jetson
     private final String portJetson = "65432"; //port python
 
     private String[] request;
@@ -311,7 +311,7 @@ public class TcpClientService extends Service {
                 updateFMCoordinate(editor);
                 //fromServiceToActivity(ACTION, KEY, "start_follow"); //TODO: cambiare MSG, serve un msg?
                 break;
-            case "hotpoint_coordinates":
+            case "hotpoint_coordinates": //from command NADSearchAtPos
                 setHotCoordinate(editor);
                 fromServiceToActivity(ACTION, KEY, "start_hotpoint");
                 break;
@@ -423,7 +423,7 @@ public class TcpClientService extends Service {
         @Override
         public void onReceive(Context context, Intent intent) {
 
-            Log.i(TAG, "sono in br " + intent.getStringExtra("state"));
+            Log.i(TAG, "Broadcaster: " + intent.getStringExtra("state"));
             String msg= intent.getStringExtra("state");
             if(msg.equals("isStreaming")){
                 sendMessageJetson(msg);

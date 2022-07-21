@@ -49,7 +49,7 @@ public class GPSPlancia {
         double longitude = Double.parseDouble(longitudeString);
         float altitude = Float.parseFloat(altitudeString);
         GPSPlancia gpsPlancia = new GPSPlancia(latitude, longitude, altitude);
-        if(!getGPSPlanciaList().contains(gpsPlancia)){
+        if(!gpsPlanciaList.contains(gpsPlancia)){
             gpsPlanciaList.add(new GPSPlancia(latitude, longitude, altitude));
         }
     }
@@ -59,13 +59,14 @@ public class GPSPlancia {
         return distance >= distanceMeters;
     }
 
+    //remove waypoints that are closer than interdictionRadius between them
     public static List<GPSPlancia> getCleanedGPSList(double interdictionRadius){
-        Log.i(TAG, "Initial GPS list length: " + getGPSPlanciaList().size());
+        Log.i(TAG, "Initial GPS list length: " + gpsPlanciaList.size());
         List<GPSPlancia> cleanedList = new ArrayList<>();
-        if(!getGPSPlanciaList().isEmpty()){
-            cleanedList.add(getGPSPlanciaList().get(0));
-            LatLng oldPos = new LatLng((getGPSPlanciaList().get(0).getLatitude()), cleanedList.get(0).getLongitude());
-            for (GPSPlancia gps: getGPSPlanciaList()) {
+        if(!gpsPlanciaList.isEmpty()){
+            cleanedList.add(gpsPlanciaList.get(0));
+            LatLng oldPos = new LatLng((gpsPlanciaList.get(0).getLatitude()), cleanedList.get(0).getLongitude());
+            for (GPSPlancia gps: gpsPlanciaList) {
                 LatLng currentPos = new LatLng(gps.getLatitude(), gps.getLongitude());
                 if(checkPosDistance(oldPos, currentPos, interdictionRadius)){
                     cleanedList.add(gps);
@@ -83,4 +84,14 @@ public class GPSPlancia {
         return cleanedList;
     }
 
+    //remove first waypointCount element from gpsPlanciaList
+    public static void updateGPSList(int waypointCount) {
+        int wpToRemove = waypointCount/2;
+        Log.i(TAG, "Initial GPS list length: " + gpsPlanciaList.size() + ", waypointCount: " + waypointCount + ", therefore removing " + wpToRemove + " waypoints");
+        //TODO capire perche' serve il /2
+        for (int i = 0; i < wpToRemove; i++) {
+            gpsPlanciaList.remove(0);
+        }
+        Log.i(TAG, "Updated GPS list length: " + gpsPlanciaList.size());
+    }
 }

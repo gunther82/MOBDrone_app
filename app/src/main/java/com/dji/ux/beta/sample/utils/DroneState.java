@@ -190,7 +190,8 @@ public class DroneState {
             getDroneLocation(product);
             getDroneBattery();
             setTracking();
-            getRealTimeData();
+//            getRealTimeData();
+            getSpeed();
             stringStatePlancia.delete(0, stringStatePlancia.length());
 //            stringStatePlancia.append("\n");
             stringStatePlancia.append("true").append("#");
@@ -246,6 +247,14 @@ public class DroneState {
         return stringJetson;
     }
 
+    private static void getSpeed() {
+        String velX = Float.toString(flightController.getState().getVelocityX());
+        String velY = Float.toString(flightController.getState().getVelocityY());
+        String velZ = Float.toString(flightController.getState().getVelocityZ());
+        speed = velX + ":" + velY + ":" + velZ;
+//        Log.i(TAG, "speed " + speed);
+    }
+
     // gets real time flight data of the aircraft with the given serial number
     private static void getRealTimeData() {
         //TODO:se non va togliere commento
@@ -264,12 +273,6 @@ public class DroneState {
         });
         final ArrayList<String> serialNumbers = new ArrayList<>(1);
         serialNumbers.add(serialNumber);
-
-//        String velX = Float.toString(flightController.getState().getVelocityX());
-//        String velY = Float.toString(flightController.getState().getVelocityY());
-//        String velZ = Float.toString(flightController.getState().getVelocityZ());
-//        speed = velX + ":" + velY + ":" + velZ;
-//        Log.i(TAG, "speed " + s.getSpeed());
 
         try {
             DJISDKManager.getInstance().getFlightHubManager().getAircraftRealTimeFlightData(serialNumbers, new CommonCallbacks.CompletionCallbackWith<List<RealTimeFlightData>>() {
