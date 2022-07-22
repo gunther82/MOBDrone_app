@@ -9,7 +9,6 @@ import androidx.annotation.Nullable;
 
 import com.dji.ux.beta.sample.R;
 import com.dji.ux.beta.sample.utils.ToastUtils;
-import com.dji.ux.beta.sample.utils.ToastUtils.*;
 
 import dji.common.error.DJIError;
 import dji.common.mission.hotpoint.HotpointHeading;
@@ -103,7 +102,7 @@ public class PosMission {
                         Log.i(TAG, "State startHP " + getHPState());
                     } else {
                         ToastUtils.seToToast(mContext, "Mission Start: " + "Successfully");
-                        Log.i(TAG, "Mission Start: " + "Successfully");
+                        Log.i(TAG, "HotpointMission Start: " + "Successfully");
                         Log.i(TAG, "State startHP " + getHPState());
                         //TODO: inviare alla plancia
                     }
@@ -117,8 +116,8 @@ public class PosMission {
         getHotpointM().pause(new CommonCallbacks.CompletionCallback() {
             @Override
             public void onResult(DJIError djiError) {
-                ToastUtils.seToToast(mContext,"Mission Paused: " + (djiError == null ? "Successfully" : djiError.getDescription()));
-                Log.i(TAG, "Mission Paused: " + (djiError == null ? "Successfully" : djiError.getDescription()));
+                Log.i(TAG, "HotpointMission Paused: " + (djiError == null ? "Successfully" : djiError.getDescription()));
+                ToastUtils.seToToast(mContext,"HotpointMission Paused: " + (djiError == null ? "Successfully" : djiError.getDescription()));
                 //TODO: inviare alla plancia
             }
         });
@@ -128,8 +127,8 @@ public class PosMission {
         getHotpointM().resume(new CommonCallbacks.CompletionCallback() {
             @Override
             public void onResult(DJIError djiError) {
-                ToastUtils.seToToast(mContext,"Mission Resumed: " + (djiError == null ? "Successfully" : djiError.getDescription()));
-                Log.i(TAG, "Mission Resumed: " + (djiError == null ? "Successfully" : djiError.getDescription()));
+                Log.i(TAG, "HotpointMission Resumed: " + (djiError == null ? "Successfully" : djiError.getDescription()));
+                ToastUtils.seToToast(mContext,"HotpointMission Resumed: " + (djiError == null ? "Successfully" : djiError.getDescription()));
                 //TODO: inviare alla plancia
             }
         });
@@ -139,8 +138,8 @@ public class PosMission {
         getHotpointM().stop(new CommonCallbacks.CompletionCallback() {
             @Override
             public void onResult(DJIError djiError) {
-                ToastUtils.seToToast(mContext,"Mission Stopped: " + (djiError == null ? "Successfully" : djiError.getDescription()));
-                Log.i(TAG, "Mission Stopped: " + (djiError == null ? "Successfully" : djiError.getDescription()));
+                Log.i(TAG, "HotpointMission Stopped: " + (djiError == null ? "Successfully" : djiError.getDescription()));
+                ToastUtils.seToToast(mContext,"HotpointMission Stopped: " + (djiError == null ? "Successfully" : djiError.getDescription()));
                 //TODO: inviare alla plancia
             }
         });

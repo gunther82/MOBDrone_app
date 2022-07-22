@@ -153,7 +153,8 @@ public class FollowMission {
         getFollowM().stopMission(new CommonCallbacks.CompletionCallback() {
             @Override
             public void onResult(DJIError djiError) {
-                setResultToToast(mContext,"Mission Stop: " + (djiError == null ? "Successfully" : djiError.getDescription()));
+                Log.i(TAG, "FollowMission Stopped: " + (djiError == null ? "Successfully" : djiError.getDescription()));
+                setResultToToast(mContext,"FollowMission Stop: " + (djiError == null ? "Successfully" : djiError.getDescription()));
             }
         });
     }

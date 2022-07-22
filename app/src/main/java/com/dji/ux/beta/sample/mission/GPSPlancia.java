@@ -2,6 +2,7 @@ package com.dji.ux.beta.sample.mission;
 
 import android.location.Location;
 import android.util.Log;
+import android.widget.Toast;
 
 import com.dji.ux.beta.sample.R;
 import com.dji.ux.beta.sample.utils.ToastUtils;
@@ -78,6 +79,7 @@ public class GPSPlancia {
             }
         } else {
             ToastUtils.setResultToToast("GPS list empty!");
+//            Toast.makeText(getApplicationContext(), "GPS list empty!", Toast.LENGTH_SHORT).show();
         }
 
         Log.i(TAG, "Cleaned GPS list length: " + cleanedList.size());
@@ -86,9 +88,10 @@ public class GPSPlancia {
 
     //remove first waypointCount element from gpsPlanciaList
     public static void updateGPSList(int waypointCount) {
-        int wpToRemove = waypointCount/2;
-        Log.i(TAG, "Initial GPS list length: " + gpsPlanciaList.size() + ", waypointCount: " + waypointCount + ", therefore removing " + wpToRemove + " waypoints");
+//        int wpToRemove = waypointCount/2;
         //TODO capire perche' serve il /2
+        int wpToRemove = waypointCount + 1; //the parameter is the number of waypoints to be deleted
+        Log.i(TAG, "Initial GPS list length: " + gpsPlanciaList.size() + ", waypointCount: " + waypointCount + ", therefore removing " + wpToRemove + " waypoints");
         for (int i = 0; i < wpToRemove; i++) {
             gpsPlanciaList.remove(0);
         }

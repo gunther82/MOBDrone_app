@@ -109,7 +109,7 @@ public class TcpClientService extends Service {
                         //Log.i(TAG, message);
 
                         if(bufferString.toString().equals("status")){
-                            boolean disableConsole = sharedPreferences.getBoolean(getString(R.string.disableConsole), false);
+                            boolean disableConsole = sharedPreferences.getBoolean(getString(R.string.disableConsole), true);
                             StringBuilder bufferStatus = DroneState.getDroneStatePlancia(disableConsole);
                             //StringBuilder bufferStatus = DroneState.getDroneState();
                             //bufferStatus.append("\n").append(DroneState.getStreamInfo());
@@ -274,12 +274,14 @@ public class TcpClientService extends Service {
     private void handleRequest(String req){
         sharedPreferences = this.getSharedPreferences(getString(R.string.my_pref), Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = sharedPreferences.edit();
+        boolean disableConsole = sharedPreferences.getBoolean(getString(R.string.disableConsole), true);
+
         if(!req.equals("gps") && !req.equals("") && !req.equals("status"))
             Log.i(TAG, "Received " + req);
         request = req.split("-");
 
-        boolean disableConsole = sharedPreferences.getBoolean(getString(R.string.disableConsole), false);
         if(disableConsole && !request[0].startsWith("hotpoint_jetson")) {
+            Log.i(TAG, "Ignoring command because the console is disabled");
             return;
         }
 
@@ -325,7 +327,7 @@ public class TcpClientService extends Service {
     }
 
     private void setSpeed(SharedPreferences.Editor editor){
-        Log.i(TAG, "speed " + request[1]);
+        Log.i(TAG, "Setting speed to: " + request[1]);
         float speed = Float.parseFloat(request[1]);
         if(checkSpeed(speed, request[1])){
             editor.putFloat(getString(R.string.speed_waypoint), speed);

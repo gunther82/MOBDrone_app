@@ -156,6 +156,9 @@ public class CameraActivity extends AppCompatActivity {
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         setContentView(R.layout.activity_camera);
         sharedPreferences = getSharedPreferences(getString(R.string.my_pref), Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.putBoolean(getString(R.string.disableConsole), true);
+        editor.apply();
 
         double interdictionRadius = sharedPreferences.getFloat(getString(R.string.interdiction_area), INTERDICTION_RADIUS);
 //        Toast.makeText(getApplicationContext(), "Interdiction radius: " + interdictionRadius, Toast.LENGTH_SHORT).show();
@@ -180,7 +183,6 @@ public class CameraActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 boolean disableConsole = sharedPreferences.getBoolean(getString(R.string.disableConsole), true);
-                SharedPreferences.Editor editor = sharedPreferences.edit();
                 Log.i(TAG, "disableConsole " + !disableConsole);
                 if(!disableConsole) {
                     stopAllMissions();
@@ -338,7 +340,7 @@ public class CameraActivity extends AppCompatActivity {
                 DJISDKManager.getInstance().getLiveStreamManager().setStartTime();
                 runOnUiThread(new Runnable() {
                     public void run() {
-                        Toast.makeText(getApplication(), "RESULT: " + result, Toast.LENGTH_LONG).show();
+                        Toast.makeText(getApplication(), "RESULT: " + result, Toast.LENGTH_SHORT).show();
                         if(result == 0){
                             fromActivityToService("isStreaming");
                             streamButton.setImageDrawable(ContextCompat.getDrawable(getBaseContext(), R.drawable.baseline_cast_connected_black_48));
@@ -406,8 +408,8 @@ public class CameraActivity extends AppCompatActivity {
             mPointMission.createWaypointFromList(cleanedList);
             mPointMission.configWaypointMission(waypointSpeed);
             mPointMission.uploadAndStartWayPointMission();
-            while(!mPointMission.getWaypointMissionState().equals(WaypointMissionState.READY_TO_EXECUTE.toString())) {}
-            mPointMission.startWaypointMission();
+//            while(!mPointMission.getWaypointMissionState().equals(WaypointMissionState.READY_TO_EXECUTE.toString())) {}
+//            mPointMission.startWaypointMission();
         }
     }
 
@@ -484,7 +486,8 @@ public class CameraActivity extends AppCompatActivity {
 
     //remove all waypoints from waypointMissionBuilder and only visited waypoints from GPSPlancia and visited markers on GUI
     private void deletePositionsCount(){
-        int wpCount = mPointMission.getWayPointCount();
+//        int wpCount = mPointMission.getWayPointCount();
+        int wpCount = mPointMission.getNextWaypointIndex();
         mPointMission.deleteWPCount(); //remove visited waypoints from waypointMissionBuilder and from GPSPlancia
         runOnUiThread(new Runnable() {
             @Override
@@ -492,7 +495,8 @@ public class CameraActivity extends AppCompatActivity {
                 //remove visited markers on GUI
                 if(mapWidget.getMap()!=null && listMarker!= null) {
 //                    DJIMarker marker;
-//                    for(int i = 0; i < wpCount/2; i++) {
+////                    for(int i = 0; i < wpCount/2; i++) {
+//                    for(int i = 0; i < wpCount; i++) {
 //                        marker = listMarker.get(i);
 //                        marker.remove();
 //                    }
@@ -577,7 +581,7 @@ public class CameraActivity extends AppCompatActivity {
         switch (action) {
             case "speed_wp":
                 waypointSpeed = sharedPreferences.getFloat(getString(R.string.speed_waypoint), 0.0f);
-                Log.i(TAG, "speed value in camera act: " + waypointSpeed);
+//                Log.i(TAG, "speed value in camera act: " + waypointSpeed);
                 Toast.makeText(this, "WP speed: " + waypointSpeed, Toast.LENGTH_SHORT).show();
                 mPointMission.setWaypointMissionSpeed(waypointSpeed);
                 break;
@@ -597,23 +601,21 @@ public class CameraActivity extends AppCompatActivity {
             case "start_waypoint_list":
                 fromActivityToService("Uploading and starting WP Mission, current state: " + mPointMission.getWaypointMissionState());
                 handleWPMissionButton();
-                Log.i(TAG, "After handleWPMissionButton, current state: " + mPointMission.getWaypointMissionState());
+//                Log.i(TAG, "After handleWPMissionButton, current state: " + mPointMission.getWaypointMissionState());
                 break;
-            case "start_waypoint": //TODO update
+            case "start_waypoint":
                 String wpState = mPointMission.getWaypointMissionState();
                 if(wpState.equals(WaypointMissionState.EXECUTION_PAUSED.toString())) {
                     fromActivityToService("Resuming WP Mission, current state: " + wpState);
                     mPointMission.resumeWaypointMission();
-                    Log.i(TAG, "Resumed WaypointMission");
                 }
                 if(wpState.equals(WaypointMissionState.READY_TO_EXECUTE.toString())) { //TODO check if this can happen
                     fromActivityToService("Starting WP Mission, current state: " + wpState);
                     mPointMission.startWaypointMission();
-                    Log.i(TAG, "Started WaypointMission");
                 }
                 if(wpState.equals(WaypointMissionState.READY_TO_UPLOAD.toString())) {
                     fromActivityToService("Re-starting interrupted WP Mission, current state: " + wpState);
-                    handleWPMissionButton(); //TODO double check that it works with no modifications
+                    handleWPMissionButton();
                     Log.i(TAG, "Restarted WaypointMission");
                 }
                 break;
@@ -623,17 +625,14 @@ public class CameraActivity extends AppCompatActivity {
                     case WAYPOINT_MISSION:
                         fromActivityToService("Pausing WP mission, current state: " + mPointMission.getWaypointMissionState());
                         mPointMission.pauseWaypointMission();
-                        Log.i(TAG, "Paused WaypointMission");
                         break;
                     case HOTPOINT_MISSION:
                         fromActivityToService("Pausing HP mission, current state: " + mPosMission.getHPState());
                         mPosMission.pauseHotPoint();
-                        Log.i(TAG, "Paused HotpointMission");
                         break;
                     case FOLLOW_MISSION:
                         fromActivityToService("Pausing Follow mission, current state: " + mFollowMission.getFollowState());
                         mFollowMission.stopFollowShip();
-                        Log.i(TAG, "Stopped FollowMission");
                         break;
                 }
                 break;
@@ -644,17 +643,14 @@ public class CameraActivity extends AppCompatActivity {
                         fromActivityToService("Stopping WP Mission, current state: " + mPointMission.getWaypointMissionState());
                         mPointMission.stopWaypointMission();
                         deletePositionsCount();
-                        Log.i(TAG, "Stopped WaypointMission");
                         break;
                     case HOTPOINT_MISSION:
                         fromActivityToService("Stopping HP Mission, current state: " + mPosMission.getHPState());
                         mPosMission.stopHotPoint();
-                        Log.i(TAG, "Stopped HotpointMission");
                         break;
                     case FOLLOW_MISSION:
                         fromActivityToService("Stopping Follow Mission, current state: " + mFollowMission.getFollowState());
                         mFollowMission.stopFollowShip();
-                        Log.i(TAG, "Stopped FollowMission");
                         break;
                 }
                 break;
@@ -664,17 +660,14 @@ public class CameraActivity extends AppCompatActivity {
                     case WAYPOINT_MISSION:
                         fromActivityToService("Resuming WP Mission, current state: " + mPointMission.getWaypointMissionState());
                         mPointMission.resumeWaypointMission();
-                        Log.i(TAG, "Resumed WaypointMission");
                         break;
                     case HOTPOINT_MISSION:
                         fromActivityToService("Resuming HP Mission, current state: " + mPosMission.getHPState());
                         mPosMission.resumeHotPoint();
-                        Log.i(TAG, "Resumed HotpointMission");
                         break;
                     case FOLLOW_MISSION:
                         fromActivityToService("Resuming Follow Mission, current state: " + mFollowMission.getFollowState());
                         mFollowMission.startFollowShip(sharedPreferences);
-                        Log.i(TAG, "Restarted FollowMission");
                         break;
                 }
                 break;
