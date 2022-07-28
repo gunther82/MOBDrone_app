@@ -28,6 +28,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.AsyncTask;
 import android.os.Build;
@@ -73,6 +74,8 @@ import dji.sdk.sdkmanager.DJISDKManager;
  */
 //@RequiresApi(api = Build.VERSION_CODES.S)
 public class MainActivity extends AppCompatActivity {
+
+    SharedPreferences sharedPreferences;
 
     //region Constants
     private static final int REQUEST_PERMISSION_CODE = 12345;
@@ -223,6 +226,13 @@ public class MainActivity extends AppCompatActivity {
     //region Lifecycle
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        sharedPreferences = getSharedPreferences(getString(R.string.my_pref), Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.putBoolean(getString(R.string.disableConsole), true);
+        editor.apply();
+
+        Log.i(TAG, "      ******** onCreate: disableConsole true");
+
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         ButterKnife.bind(this);

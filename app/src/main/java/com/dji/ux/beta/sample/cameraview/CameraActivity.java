@@ -84,11 +84,10 @@ public class CameraActivity extends AppCompatActivity {
 //    private static final String TAG = CameraActivity.class.getSimpleName();
     private static final String TAG = "CameraActivity";
 
-    //private final String liveShowUrl = "rtmp://192.168.43.225/live/drone"; //hotspot
-    private final String liveShowUrl = "rtmp://192.168.1.100/live/drone"; //localhost
-//    private final String liveShowUrl = "rtmp://192.168.200.22/live/drone"; //localhost livorno
-    //private final String liveShowUrl = "rtmp://146.48.85.126/live/drone"; //eduroam ethernet
-    //private final String liveShowUrl = "rtmp://146.48.54.180/live/drone"; //eduroam WiFi
+    private final String liveShowUrl = "rtmp://192.168.1.100/live/drone"; //stream TP-link
+//        private final String liveShowUrl = "rtmp://192.168.2.8/live/drone"; //RUBICON
+//    private final String liveShowUrl = "rtmp://192.168.200.22/live/drone"; //stream livorno
+//    private final String liveShowUrl = "rtmp://146.48.53.41/live/drone"; //stream remoto
 
     private final String ACTION = "FROM CAMERA";
 
@@ -202,6 +201,7 @@ public class CameraActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 if(!DJISDKManager.getInstance().getLiveStreamManager().isStreaming()){
+                    initSettings();
                     startLiveStream();
 //                    streamButton.setImageDrawable(ContextCompat.getDrawable(getBaseContext(), R.drawable.baseline_cast_connected_black_48));
                 } else {
@@ -217,11 +217,15 @@ public class CameraActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 if(mPosMission.getHPState().equals(HotpointMissionState.EXECUTING.toString()) || mPosMission.getHPState().equals(HotpointMissionState.EXECUTION_PAUSED.toString())){
+                    Log.i(TAG, "Stopping HotpointMission and resuming WaypointMission...");
                     mPosMission.stopHotPoint();
-                    mPointMission.configWaypointMission(waypointSpeed);
-                    mPointMission.uploadAndStartWayPointMission();
-                    while(!mPointMission.getWaypointMissionState().equals(WaypointMissionState.READY_TO_EXECUTE.toString())) {}
-                    mPointMission.startWaypointMission();
+                    deleteHotpoint();
+                    handleWPMissionButton();
+//                    mPointMission.createWaypointFromList(cleanedList);
+//                    mPointMission.configWaypointMission(waypointSpeed);
+//                    mPointMission.uploadAndStartWayPointMission();
+//                    while(!mPointMission.getWaypointMissionState().equals(WaypointMissionState.READY_TO_EXECUTE.toString())) {}
+//                    mPointMission.startWaypointMission();
                     //stopSearch.setVisibility(View.GONE);
                 }
             }
@@ -309,14 +313,14 @@ public class CameraActivity extends AppCompatActivity {
         listener = new LiveStreamManager.OnLiveChangeListener() {
             @Override
             public void onStatusChanged(int i) {
-                ToastUtils.setResultToToast("status changed : " + i);
+                setResultToToast("status changed : " + i);
             }
         };
     }
 
     private boolean isLiveStreamManagerOn() {
         if(DJISDKManager.getInstance().getLiveStreamManager()==null){
-            ToastUtils.setResultToToast("No live stream manager!");
+            setResultToToast("No live stream manager!");
             return false;
         }
         return true;
@@ -356,8 +360,7 @@ public class CameraActivity extends AppCompatActivity {
             return;
         }
         DJISDKManager.getInstance().getLiveStreamManager().stopStream();
-        ToastUtils.setResultToToast("Stop Live Show");
-        Toast.makeText(getApplicationContext(), "Stop Live Show", Toast.LENGTH_SHORT).show();
+        setResultToToast("Stop Live Show");
         streamButton.setImageDrawable(ContextCompat.getDrawable(getBaseContext(), R.drawable.baseline_cast_black_48));
     }
     // ------- END STREAMING REGION ---------------
@@ -383,8 +386,8 @@ public class CameraActivity extends AppCompatActivity {
     private void drawHotpoint(){
         int strokeColor = 0xffff0000; //red outline
         int shadeColor = 0x44ff0000; //opaque red fill
-        double latitude = Double.parseDouble(sharedPreferences.getString(getString(R.string.latitude_pos), ""));
-        double longitude = Double.parseDouble(sharedPreferences.getString(getString(R.string.longitude_pos), ""));
+        double latitude = Double.parseDouble(sharedPreferences.getString(getString(R.string.latitude_pos), "0.0f"));
+        double longitude = Double.parseDouble(sharedPreferences.getString(getString(R.string.longitude_pos), "0.0f"));
         double interdictionRadius = sharedPreferences.getFloat(getString(R.string.interdiction_area), INTERDICTION_RADIUS);
         int vector = R.drawable.ic_noun_drrowning;
         if(mapWidget.getMap()!=null){
@@ -398,12 +401,27 @@ public class CameraActivity extends AppCompatActivity {
         }
     }
 
+    private void deleteHotpoint() {
+        mCircle.remove();
+    }
+
     private void handleWPMissionButton(){
         if(mPointMission.getWaypointMissionState().equals(WaypointMissionState.EXECUTING.toString())){
-            Toast.makeText(this, "Search already running!", Toast.LENGTH_SHORT).show();
-        } else {
+            Toast.makeText(this, "WaypointMission already running!", Toast.LENGTH_SHORT).show();
+        }
+        else {
             double interdictionRadius = sharedPreferences.getFloat(getString(R.string.interdiction_area), INTERDICTION_RADIUS);
             List<GPSPlancia> cleanedList = GPSPlancia.getCleanedGPSList(interdictionRadius);
+
+            if(cleanedList.size() == 0) {
+                Toast.makeText(this, "Waypoint list is empty, please use UploadAndStartWPMission()!", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            else if(cleanedList.size() < 2) {
+                Toast.makeText(this, "Not enough waypoints in the list, please add at least 2 waypoints in order to start a WaypointMission!", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
             drawWayPoint(cleanedList);
             mPointMission.createWaypointFromList(cleanedList);
             mPointMission.configWaypointMission(waypointSpeed);
@@ -413,8 +431,14 @@ public class CameraActivity extends AppCompatActivity {
         }
     }
 
-    private void handleSearchPerson() {
+    private void confirmSearchPerson() {
 
+    }
+
+    private void handleSearchPerson() {
+        if(sharedPreferences.getString(getString(R.string.latitude_pos), "") == null || sharedPreferences.getString(getString(R.string.longitude_pos), "") == null) {
+            return;
+        }
         double latNewPos = Double.parseDouble(sharedPreferences.getString(getString(R.string.latitude_pos), ""));
         double longNewPos = Double.parseDouble(sharedPreferences.getString(getString(R.string.longitude_pos), ""));
         currentPersonPos = new LatLng(latNewPos, longNewPos);
@@ -429,6 +453,8 @@ public class CameraActivity extends AppCompatActivity {
                 dialogCount = 0;
             }
         });
+
+
         builder.setIcon(R.drawable.ic_noun_drrowning);
         builder.setTitle("Person Detected!");
         AlertDialog alert = builder.create();
@@ -510,9 +536,12 @@ public class CameraActivity extends AppCompatActivity {
     }
 
     private void stopAllMissions() {
+        Log.i(TAG, "Stopping all missions... ");
         String wpState = mPointMission.getWaypointMissionState();
         String hpState =  mPosMission.getHPState();
         String followState =  mFollowMission.getFollowState();
+
+        Log.i(TAG, "Current states are: \nWPMission: " + wpState + "\nHPMission: " + hpState + "\nFollowMission: " + followState);
 
         if(wpState.equals(WaypointMissionState.EXECUTING.toString()) || wpState.equals(WaypointMissionState.EXECUTION_PAUSED.toString())) {
             mPointMission.stopWaypointMission();
@@ -521,6 +550,7 @@ public class CameraActivity extends AppCompatActivity {
 
         if(hpState.equals(HotpointMissionState.INITIAL_PHASE.toString()) || hpState.equals(HotpointMissionState.EXECUTING.toString()) || hpState.equals(HotpointMissionState.EXECUTION_PAUSED.toString())) {
             mPosMission.stopHotPoint();
+            deleteHotpoint();
         }
 
         if(followState.equals(FollowMeMissionState.EXECUTING.toString())) {
@@ -647,6 +677,7 @@ public class CameraActivity extends AppCompatActivity {
                     case HOTPOINT_MISSION:
                         fromActivityToService("Stopping HP Mission, current state: " + mPosMission.getHPState());
                         mPosMission.stopHotPoint();
+                        deleteHotpoint();
                         break;
                     case FOLLOW_MISSION:
                         fromActivityToService("Stopping Follow Mission, current state: " + mFollowMission.getFollowState());
@@ -687,12 +718,16 @@ public class CameraActivity extends AppCompatActivity {
                 mPosMission.startHotPoint(sharedPreferences);
                 break;
             case "person": //from jetson when detected a person
+                Log.i(TAG, "Received person from jetson");
                 handleSearchPerson();
                 break;
             case "warning":
                 String warning = sharedPreferences.getString(getString(R.string.warning), "");
                 Toast.makeText(getApplicationContext(), warning, Toast.LENGTH_SHORT).show();
                 break;
+            case "interdiction_radius":
+                float radius = sharedPreferences.getFloat(getString(R.string.interdiction_area), 15.0f);
+                Toast.makeText(getApplicationContext(), "Interdiction radius: " + radius, Toast.LENGTH_SHORT).show();
         }
     }
     //------- END MISSIONS REGION ---------------

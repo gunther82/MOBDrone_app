@@ -13,7 +13,6 @@ import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
 import android.util.Log;
-import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
@@ -44,11 +43,10 @@ public class TcpClientService extends Service {
     private Handler handler = new Handler();
     BufferedReader bufferedReader;//Declare the input stream object
     OutputStream outputStream;//Declare the output stream object
-    //public final String _ip = "192.168.108.36"; //hotspot
-    //public final String _ip = "192.168.1.10"; //casa
-    //public final String _ip = "192.168.1.16"; //python jetson
-    public final String _ip = "192.168.1.103"; //console
+    public final String _ip = "192.168.1.103"; //console TP-link
+//    public final String _ip = "192.168.2.5"; //console RUBICON
 //    public final String _ip = "192.168.200.185"; //console livorno
+//    public final String _ip = "213.82.97.234"; //console livorno remoto
     //public final String _ip = "192.168.1.105"; //localhost plancia
     private final String port = "11000";
 //    private final String port = "8089"; //porta console livorno
@@ -61,8 +59,10 @@ public class TcpClientService extends Service {
     private Thread connectThreadJetson;
     BufferedReader bufferedReaderJetson; //Declare the input stream object
     OutputStream outputStreamJetson; //Declare the output stream object
-    public final String _ipJetson = "192.168.1.100"; //python jetson
-//    public final String _ipJetson = "192.168.200.22"; //python jetson
+    public final String _ipJetson = "192.168.1.100"; //python jetson TP-link
+//    public final String _ipJetson = "192.168.2.8"; //python jetson RUBICON
+//    public final String _ipJetson = "192.168.200.22"; //python jetson livorno
+//    public final String _ipJetson = "146.48.53.41"; //python jetson remoto
     private final String portJetson = "65432"; //port python
 
     private String[] request;
@@ -280,7 +280,7 @@ public class TcpClientService extends Service {
             Log.i(TAG, "Received " + req);
         request = req.split("-");
 
-        if(disableConsole && !request[0].startsWith("hotpoint_jetson")) {
+        if(disableConsole && !request[0].startsWith("hotpoint_jetson") && !request[0].startsWith("warning") && !req.equals("gps") && !req.equals("") && !req.equals("status")) {
             Log.i(TAG, "Ignoring command because the console is disabled");
             return;
         }
@@ -306,14 +306,20 @@ public class TcpClientService extends Service {
                 //fromServiceToActivity(ACTION, KEY, "coordinates_wp");
                 break;
             case "follow_coordinates":
+                request[1] = request[1].replace(",", ".");
+                request[2] = request[2].replace(",", ".");
                 setFMCoordinate(editor);
                 fromServiceToActivity(ACTION, KEY, "start_follow");
                 break;
             case "update_coordinates":
+                request[1] = request[1].replace(",", ".");
+                request[2] = request[2].replace(",", ".");
                 updateFMCoordinate(editor);
                 //fromServiceToActivity(ACTION, KEY, "start_follow"); //TODO: cambiare MSG, serve un msg?
                 break;
             case "hotpoint_coordinates": //from command NADSearchAtPos
+                request[1] = request[1].replace(",", ".");
+                request[2] = request[2].replace(",", ".");
                 setHotCoordinate(editor);
                 fromServiceToActivity(ACTION, KEY, "start_hotpoint");
                 break;
@@ -337,14 +343,14 @@ public class TcpClientService extends Service {
     }
 
     private void setInterdictionRadius(SharedPreferences.Editor editor){
-        Log.i(TAG, "New interdiction_area " + request[1]);
+        Log.i(TAG, "New interdiction radius: " + request[1]);
         if(isNumeric(request[1])){
 //            CameraActivity.setInterdictionRadius(Float.parseFloat(request[1]));
 
             float interdictionArea = Float.parseFloat(request[1]);
             editor.putFloat(getString(R.string.interdiction_area), interdictionArea);
             editor.apply();
-//            fromServiceToActivity(ACTION, KEY, "interdiction_area");
+            fromServiceToActivity(ACTION, KEY, "interdiction_radius");
         }
         else {
             try {

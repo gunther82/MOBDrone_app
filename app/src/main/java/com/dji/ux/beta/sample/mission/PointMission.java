@@ -114,7 +114,9 @@ public class PointMission {
 
         @Override
         public void onExecutionUpdate(@NonNull WaypointMissionExecutionEvent waypointMissionExecutionEvent) {
+            Log.i(TAG, "onExecutionUpdate ");
             if(waypointMissionExecutionEvent.getProgress().isWaypointReached){
+                Log.i(TAG, "Waypoint reached ");
 //                wayPointCount++;
 //                Log.i(TAG, "Waypoint reached " + wayPointCount);
                 //TODO capire perche' viene invocato piu' volte (tipicamente 2) quando raggiunge un waypoint
@@ -134,6 +136,7 @@ public class PointMission {
             Log.i(TAG, "Execution ended with nextWaypointIndex: " + nextWaypointIndex + " and waypointMissionBuilder.getWaypointCount(): " + waypointMissionBuilder.getWaypointCount());
             if(nextWaypointIndex == waypointMissionBuilder.getWaypointCount()-1) {
                 Log.i(TAG, "All waypoints reached");
+                deleteWaypoint();
             }
             setResultToToastCallback(mContext, "Execution finished: " + (djiError == null ? "Success!" : djiError.getDescription()));
 //            waypointMissionBuilder = null;
@@ -274,7 +277,6 @@ public class PointMission {
         } else {
             setResultToToast(mContext,"Couldn't resume WaypointMission because state is not paused, current state: " + getWaypointMissionState());
         }
-
     }
 
     public int stopWaypointMission(){
