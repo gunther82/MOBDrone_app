@@ -84,7 +84,7 @@ public class PosMission {
 
         @Override
         public void onExecutionFinish(@Nullable DJIError djiError) {
-            ToastUtils.seToToast(mContext, "Execution of HotpointMission finished: " + (djiError == null ? "Success!" : djiError.getDescription()));
+            ToastUtils.setResultToToast("Execution of HotpointMission finished: " + (djiError == null ? "Success!" : djiError.getDescription()));
         }
     };
 
@@ -130,7 +130,7 @@ public class PosMission {
                 }
             });
         } else {
-            ToastUtils.seToToast(mContext,"Couldn't pause HotpointMission because state is not executing, current state: " + getHPState());
+            ToastUtils.setResultToToast("Couldn't pause HotpointMission because state is not executing, current state: " + getHPState());
         }
     }
 
@@ -145,7 +145,7 @@ public class PosMission {
                 }
             });
         } else {
-            ToastUtils.seToToast(mContext,"Couldn't resume HotpointMission because state is not paused, current state: " + getHPState());
+            ToastUtils.setResultToToast("Couldn't resume HotpointMission because state is not paused, current state: " + getHPState());
         }
     }
 
@@ -161,7 +161,7 @@ public class PosMission {
             });
         }
         else {
-            ToastUtils.seToToast(mContext, "Couldn't stop HotpointMission because state is not executing or paused, current state: " + getHPState());
+            ToastUtils.setResultToToast("Couldn't stop HotpointMission because state is not executing or paused, current state: " + getHPState());
         }
     }
 }

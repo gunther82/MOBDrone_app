@@ -1,6 +1,8 @@
 package com.dji.ux.beta.sample.mission;
 
+import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.drawable.Drawable;
 import android.os.Handler;
@@ -11,9 +13,11 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import com.dji.ux.beta.sample.R;
 import com.dji.ux.beta.sample.cameraview.CameraActivity;
+import com.dji.ux.beta.sample.connection.TcpClientService;
 import com.dji.ux.beta.sample.utils.ToastUtils;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
@@ -62,25 +66,13 @@ public class PointMission {
         this.mContext = mContext;
     }
 
-    private void setResultToToast(Context mContext, String s) {
-        Toast.makeText(mContext, s, Toast.LENGTH_SHORT).show();
-    }
-
-//    private void setResultToToastCallback(Context mContext, String s) {
-//        Looper.prepare();
+//    private void setResultToToast(Context mContext, String s) {
 //        Toast.makeText(mContext, s, Toast.LENGTH_SHORT).show();
-//        Looper.loop();
 //    }
 
-//    private void showToast(final String toastMsg) {
-//        Handler handler = new Handler(Looper.getMainLooper());
-//        handler.post(new Runnable() {
-//            @Override
-//            public void run() {
-//                Toast.makeText(getApplicationContext(), toastMsg, Toast.LENGTH_LONG).show();
-//            }
-//        });
-//    }
+    private void setResultToToast(String s) {
+        ToastUtils.setResultToToast(s);
+    }
 
     public WaypointMissionOperator getWaypointM (){
         if (instance == null) {
@@ -115,24 +107,13 @@ public class PointMission {
                     && waypointMissionUploadEvent.getProgress().isSummaryUploaded
                     && waypointMissionUploadEvent.getProgress().uploadedWaypointIndex == (waypointMissionUploadEvent.getProgress().totalWaypointCount) - 1) {
                         Log.i(TAG, "onUploadUpdate: Mission uploaded successfully, current state: " + getWaypointMissionState());
-//                        setResultToToastCallback(mContext, "Mission upload successfully!");
             }
-
-//            if(getWaypointMissionState().equals(WaypointMissionState.READY_TO_EXECUTE.toString())) {
-//                Log.i(TAG, "Mission uploaded successfully, current state: " + getWaypointMissionState());
-//            }
         }
 
         @Override
         public void onExecutionUpdate(@NonNull WaypointMissionExecutionEvent waypointMissionExecutionEvent) {
-            Log.i(TAG, "onExecutionUpdate ");
             if(waypointMissionExecutionEvent.getProgress().isWaypointReached){
-                Log.i(TAG, "Waypoint reached ");
-//                wayPointCount++;
-//                Log.i(TAG, "Waypoint reached " + wayPointCount);
-                //TODO capire perche' viene invocato piu' volte (tipicamente 2) quando raggiunge un waypoint
                 nextWaypointIndex = waypointMissionExecutionEvent.getProgress().targetWaypointIndex;
-//                Log.i(TAG, "onExecutionUpdate: nextWaypointIndex: " + nextWaypointIndex);
                 Log.i(TAG, "Waypoint reached " + nextWaypointIndex);
             }
         }
@@ -145,12 +126,16 @@ public class PointMission {
         @Override
         public void onExecutionFinish(@Nullable @org.jetbrains.annotations.Nullable DJIError djiError) {
             Log.i(TAG, "Execution ended with nextWaypointIndex: " + nextWaypointIndex + " and waypointMissionBuilder.getWaypointCount(): " + waypointMissionBuilder.getWaypointCount());
-            if(nextWaypointIndex == waypointMissionBuilder.getWaypointCount()-1) {
+            if(nextWaypointIndex >= 0 && nextWaypointIndex == waypointMissionBuilder.getWaypointCount()-1) {
                 Log.i(TAG, "All waypoints reached");
+                setResultToToast("Execution finished: " + (djiError == null ? "Success!" : djiError.getDescription()));
                 deleteWaypoint();
+
+                CameraActivity activity = (CameraActivity) mContext;
+                activity.deleteMarkers();
             }
-//            setResultToToastCallback(mContext, "Execution finished: " + (djiError == null ? "Success!" : djiError.getDescription()));
 //            waypointMissionBuilder = null;
+            nextWaypointIndex = -1;
         }
     };
 
@@ -158,9 +143,8 @@ public class PointMission {
         if(waypointMissionBuilder == null){
             waypointMissionBuilder = new WaypointMission.Builder();
         }
-//        Log.i(TAG, "waypointMissionBuilder.getWaypointCount(): " + waypointMissionBuilder.getWaypointCount());
         if (cleanedList.isEmpty()){
-            setResultToToast(mContext, "List of positions is empty!");
+            setResultToToast("List of positions is empty!");
         } else {
             for (GPSPlancia gps: cleanedList) {
 
@@ -174,7 +158,7 @@ public class PointMission {
         Log.i(TAG, "WP MissBuildList size: " + waypointMissionBuilder.getWaypointList().size());
 //        Log.i(TAG, "WP WaypointCount(): " + waypointMissionBuilder.getWaypointCount());
         if(waypointMissionBuilder!= null && !waypointMissionBuilder.getWaypointList().isEmpty()){
-            setResultToToast(mContext, "All Positions added to the map!");
+            setResultToToast("Positions added to the map!");
         }
     }
 
@@ -202,9 +186,9 @@ public class PointMission {
 
         DJIError error = getWaypointM().loadMission(waypointMissionBuilder.build());
         if(error == null){
-            setResultToToast(mContext,"loadMission success");
+//            setResultToToast("loadMission success");
         } else {
-            setResultToToast(mContext,"loadMission failed " + error.getDescription());
+            setResultToToast("loadMission failed " + error.getDescription());
             Log.i(TAG, "loadMission failed " + error.getDescription());
         }
     }
@@ -220,12 +204,11 @@ public class PointMission {
             public void onResult(DJIError djiError) {
                 if(djiError == null){
                     Log.i(TAG, "Mission uploaded successfully, current state: " + getWaypointMissionState());
-//                    setResultToToastCallback(mContext,"Mission upload successfully!");
+                    setResultToToast("Mission upload successfully!");
                     startWaypointMission();
                 } else {
                     Log.i(TAG, "Mission upload failed, error: " + djiError.getDescription() + " retrying...");
-//                    setResultToToastCallback(mContext,"Mission upload failed, error: " + djiError.getDescription() + " retrying...");
-                    setResultToToast(mContext,"Mission upload failed, error: " + djiError.getDescription() + " retrying...");
+                    setResultToToast("Mission upload failed, error: " + djiError.getDescription() + " retrying...");
                     getWaypointM().retryUploadMission(null);
                 }
             }
@@ -237,11 +220,9 @@ public class PointMission {
             @Override
             public void onResult(DJIError djiError) {
                 if(djiError == null){
-//                    setResultToToastCallback(mContext,"Speed set successfully!");
-                    setResultToToast(mContext,"Speed set successfully!");
+                    setResultToToast("Speed set successfully!");
                 } else {
-//                    setResultToToastCallback(mContext,"Unable to set the desired speed: " + djiError.getDescription());
-                    setResultToToast(mContext,"Unable to set the desired speed: " + djiError.getDescription());
+                    setResultToToast("Unable to set the desired speed: " + djiError.getDescription());
                 }
             }
         });
@@ -254,13 +235,11 @@ public class PointMission {
             public void onResult(DJIError djiError) {
                 if(djiError == null){
                     Log.i(TAG, "WaypointMission started successfully!");
-//                    setResultToToastCallback(mContext,"Mission start successfully!");
-                    setResultToToast(mContext,"Mission start successfully!");
+                    setResultToToast("Mission start successfully!");
                 }
                 else {
                     Log.i(TAG, "Error while starting WaypointMission: " + djiError.getDescription());
-//                    setResultToToastCallback(mContext, "Error while starting WaypointMission: " + djiError.getDescription());
-                    setResultToToast(mContext, "Error while starting WaypointMission: " + djiError.getDescription());
+                    setResultToToast("Error while starting WaypointMission: " + djiError.getDescription());
                 }
             }
         });
@@ -272,12 +251,11 @@ public class PointMission {
                 @Override
                 public void onResult(DJIError djiError) {
                     Log.i(TAG, "WaypointMission Pause: " + (djiError == null ? "Successfully" : djiError.getDescription()));
-//                    setResultToToastCallback(mContext,"WaypointMission Pause: " + (djiError == null ? "Successfully" : djiError.getDescription()));
-                    setResultToToast(mContext,"WaypointMission Pause: " + (djiError == null ? "Successfully" : djiError.getDescription()));
+                    setResultToToast("WaypointMission Pause: " + (djiError == null ? "Successfully" : djiError.getDescription()));
                 }
             });
         } else {
-            setResultToToast(mContext,"Couldn't pause WaypointMission because state is not executing, current state: " + getWaypointMissionState());
+            setResultToToast("Couldn't pause WaypointMission because state is not executing, current state: " + getWaypointMissionState());
         }
         return nextWaypointIndex;
     }
@@ -288,12 +266,11 @@ public class PointMission {
                 @Override
                 public void onResult(DJIError djiError) {
                     Log.i(TAG, "WaypointMission Resume: " + (djiError == null ? "Successfully" : djiError.getDescription()));
-//                    setResultToToastCallback(mContext,"WaypointMission Resume: " + (djiError == null ? "Successfully" : djiError.getDescription()));
-                    setResultToToast(mContext,"WaypointMission Resume: " + (djiError == null ? "Successfully" : djiError.getDescription()));
+                    setResultToToast("WaypointMission Resume: " + (djiError == null ? "Successfully" : djiError.getDescription()));
                 }
             });
         } else {
-            setResultToToast(mContext,"Couldn't resume WaypointMission because state is not paused, current state: " + getWaypointMissionState());
+            setResultToToast("Couldn't resume WaypointMission because state is not paused, current state: " + getWaypointMissionState());
         }
     }
 
@@ -303,13 +280,12 @@ public class PointMission {
                 @Override
                 public void onResult(DJIError djiError) {
                     Log.i(TAG, "WaypointMission Stop: " + (djiError == null ? "Successfully" : djiError.getDescription()));
-//                    setResultToToastCallback(mContext,"WaypointMission Stop: " + (djiError == null ? "Successfully" : djiError.getDescription()));
-                    setResultToToast(mContext,"WaypointMission Stop: " + (djiError == null ? "Successfully" : djiError.getDescription()));
+                    setResultToToast("WaypointMission Stop: " + (djiError == null ? "Successfully" : djiError.getDescription()));
                 }
             });
         }
         else {
-            setResultToToast(mContext, "Couldn't stop WaypointMission because state is not executing or paused, current state: " + getWaypointMissionState());
+            setResultToToast("Couldn't stop WaypointMission because state is not executing or paused, current state: " + getWaypointMissionState());
         }
         return nextWaypointIndex;
     }
@@ -317,8 +293,6 @@ public class PointMission {
     private boolean deleteWaypointsFromMissionBuilder() {
         if(waypointMissionBuilder!=null) {
             Log.i(TAG, "Deleting: " + waypointMissionBuilder.getWaypointCount() + " elements in waypointMissionBuilder.getWaypointList()");
-//            Log.i(TAG, "The waypointMissionBuilder.getWaypointList() contains: " + waypointMissionBuilder.getWaypointList().size() + " elements: " + waypointMissionBuilder.getWaypointList().toString());
-
             int totalWp = waypointMissionBuilder.getWaypointCount();
 
             for (int i = 0; i < totalWp; i++) {
@@ -342,9 +316,9 @@ public class PointMission {
         if (deleted) {
             GPSPlancia.getGPSPlanciaList().clear();
             nextWaypointIndex = -1;
-            setResultToToast(mContext,"All positions deleted");
+            setResultToToast("All positions deleted");
         } else {
-            setResultToToast(mContext,"No position to delete");
+            setResultToToast("No position to delete");
             //return "No position to delete";
         }
 //        wayPointCount = 0;
@@ -367,13 +341,11 @@ public class PointMission {
 
         boolean deleted = deleteWaypointsFromMissionBuilder();
 
-        if (deleted) {
-            setResultToToast(mContext,"Visited positions deleted");
-        }
-        if(nextWaypointIndex>=0 && !GPSPlancia.getGPSPlanciaList().isEmpty()){
+//        if (deleted) {
+//            setResultToToast("Visited positions deleted");
+//        }
+        if(nextWaypointIndex>=0 && !GPSPlancia.getGPSPlanciaList().isEmpty()) {
             GPSPlancia.updateGPSList(nextWaypointIndex);
         }
-        nextWaypointIndex = -1;
-//        wayPointCount = 0;
     }
 }

@@ -496,41 +496,46 @@ public class CameraActivity extends AppCompatActivity {
     //remove all waypoints from waypointMissionBuilder (and set it tu null), from GPSPlancia and all markers on GUI
     private void deletePositions(){
         mPointMission.deleteWaypoint(); //remove visited waypoints from waypointMissionBuilder and set it tu null
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                if (mapWidget.getMap()!=null) {
-                    if(listMarker!=null){
-                        for(DJIMarker marker : listMarker){ //remove all markers on GUI
-                            marker.remove();
-                        }
-                    }
-                }
-            }
-        });
+//        runOnUiThread(new Runnable() {
+//            @Override
+//            public void run() {
+//                if(mapWidget.getMap()!=null && listMarker!= null) {
+//                    for(DJIMarker marker : listMarker){ //remove all markers on GUI
+//                        marker.remove();
+//                    }
+//                }
+//            }
+//        });
+        deleteMarkers();
     }
 
     //remove all waypoints from waypointMissionBuilder and only visited waypoints from GPSPlancia and visited markers on GUI
     private void deletePositionsCount(){
-//        int wpCount = mPointMission.getWayPointCount();
-        int wpCount = mPointMission.getNextWaypointIndex();
-        mPointMission.deleteWPCount(); //remove visited waypoints from waypointMissionBuilder and from GPSPlancia
+        mPointMission.deleteWPCount(); //remove all waypoints from waypointMissionBuilder and visited waypoints from GPSPlancia
+//        runOnUiThread(new Runnable() {
+//            @Override
+//            public void run() {
+//                //remove markers on GUI
+//                if(mapWidget.getMap()!=null && listMarker!= null) {
+//                    for(DJIMarker marker : listMarker){ //remove all markers on GUI
+//                        marker.remove();
+//                    }
+//                }
+//
+//            }
+//        });
+        deleteMarkers();
+    }
+
+    public void deleteMarkers() {
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                //remove visited markers on GUI
                 if(mapWidget.getMap()!=null && listMarker!= null) {
-//                    DJIMarker marker;
-////                    for(int i = 0; i < wpCount/2; i++) {
-//                    for(int i = 0; i < wpCount; i++) {
-//                        marker = listMarker.get(i);
-//                        marker.remove();
-//                    }
                     for(DJIMarker marker : listMarker){ //remove all markers on GUI
                         marker.remove();
                     }
                 }
-
             }
         });
     }
@@ -703,10 +708,7 @@ public class CameraActivity extends AppCompatActivity {
                 }
                 break;
             case "del_pos":
-                //String msg = deletePositions();
                 deletePositions();
-                //mPointMission.deleteWaypoint();
-                //fromActivityToService(msg);
                 break;
             case "start_follow":
                 fromActivityToService("Starting Following Mission, current state: " + mFollowMission.getFollowState());

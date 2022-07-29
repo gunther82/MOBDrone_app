@@ -1,6 +1,5 @@
 package com.dji.ux.beta.sample.utils;
 
-import android.content.Context;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
@@ -9,7 +8,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.dji.ux.beta.sample.SampleApplication;
-import com.dji.ux.beta.sample.cameraview.CameraActivity;
 
 public class ToastUtils {
     private static final int MESSAGE_UPDATE = 1;
@@ -42,7 +40,7 @@ public class ToastUtils {
     }
 
     public static void showToast(String msg) {
-        //Toast.makeText(SampleApplication.getInstance(), msg, Toast.LENGTH_SHORT).show();
+        Toast.makeText(SampleApplication.getInstance(), msg, Toast.LENGTH_SHORT).show();
     }
 
 
@@ -60,7 +58,7 @@ public class ToastUtils {
         mUIHandler.sendMessage(msg);
     }
 
-    public static void seToToast(Context mContext, String s) {
-        Toast.makeText(mContext, s, Toast.LENGTH_SHORT).show();
-    }
+//    public static void seToToast(Context mContext, String s) {
+//        Toast.makeText(mContext, s, Toast.LENGTH_SHORT).show();
+//    }
 }

@@ -81,6 +81,7 @@ public class SampleApplication extends Application {
         super.attachBaseContext(paramContext);
         Helper.install(SampleApplication.this);
         MultiDex.install(this);
+        app = this;
     }
 
     public static Application getInstance() {
