@@ -35,6 +35,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
@@ -75,7 +76,7 @@ import dji.sdk.sdkmanager.DJISDKManager;
 //@RequiresApi(api = Build.VERSION_CODES.S)
 public class MainActivity extends AppCompatActivity {
 
-    SharedPreferences sharedPreferences;
+//    SharedPreferences sharedPreferences;
 
     //region Constants
     private static final int REQUEST_PERMISSION_CODE = 12345;
@@ -129,12 +130,11 @@ public class MainActivity extends AppCompatActivity {
             if (error == DJISDKError.REGISTRATION_SUCCESS) {
                 DJISDKManager.getInstance().startConnectionToProduct();
                 runOnUiThread(() -> {
-                    //addLog("Registration succeeded");
-                    //addLog("Connecting to product");
                     registeredTextView.setText(R.string.registered);
                 });
+                Log.i(TAG, "Registration success");
             } else {
-                runOnUiThread(() -> ToastUtils.setResultToToast("Registration failed"));
+                showToast( "Register sdk fails, check network is available");
                 Log.i(TAG, "Registration failed");
             }
         }
@@ -146,6 +146,7 @@ public class MainActivity extends AppCompatActivity {
                 productNameTextView.setText(R.string.no_product);
                 fromActivityToService(ACTION, "drone_connection", getString(R.string.no_product));
             });
+            Log.i(TAG, "Drone disconnected");
         }
 
         @Override
@@ -153,11 +154,9 @@ public class MainActivity extends AppCompatActivity {
             if (product != null) {
                 runOnUiThread(() -> {
                     //addLog("Connected to product");
-
                     if (product.getModel() != null) {
                         productNameTextView.setText(getString(R.string.product_name, product.getModel().getDisplayName()));
                         fromActivityToService(ACTION, "drone_connection", getString(R.string.product_name, product.getModel().getDisplayName()));
-
                     } else if (product instanceof Aircraft) {
                         Aircraft aircraft = (Aircraft) product;
                         if (aircraft.getRemoteController() != null) {
@@ -166,6 +165,7 @@ public class MainActivity extends AppCompatActivity {
                         }
                     }
                 });
+                Log.i(TAG, String.format("onProductConnect newProduct:%s", product));
             }
         }
 
@@ -190,13 +190,12 @@ public class MainActivity extends AppCompatActivity {
         public void onComponentChange(BaseProduct.ComponentKey key,
                                       BaseComponent oldComponent,
                                       BaseComponent newComponent) {
-            runOnUiThread(() -> ToastUtils.setResultToToast(key.toString() + " changed"));
-
+            Log.i(TAG, key.toString() + " changed");
         }
 
         @Override
         public void onInitProcess(DJISDKInitEvent djisdkInitEvent, int totalProcess) {
-            runOnUiThread(() -> ToastUtils.setResultToToast(djisdkInitEvent.getInitializationState().toString()));
+            Log.i(TAG, djisdkInitEvent.getInitializationState().toString());
         }
 
         @Override
@@ -226,13 +225,6 @@ public class MainActivity extends AppCompatActivity {
     //region Lifecycle
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        sharedPreferences = getSharedPreferences(getString(R.string.my_pref), Context.MODE_PRIVATE);
-        SharedPreferences.Editor editor = sharedPreferences.edit();
-        editor.putBoolean(getString(R.string.disableConsole), true);
-        editor.apply();
-
-        Log.i(TAG, "      ******** onCreate: disableConsole true");
-
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         ButterKnife.bind(this);
@@ -351,16 +343,16 @@ public class MainActivity extends AppCompatActivity {
         if (isRegistrationInProgress.compareAndSet(false, true)) {
             Log.i(TAG, "registering product");
             //addLog("Registering product");
-            AsyncTask.execute(() -> DJISDKManager.getInstance().registerApp(MainActivity.this, registrationCallback));
+            AsyncTask.execute(() -> DJISDKManager.getInstance().registerApp(getApplicationContext(), registrationCallback));
         }
     }
 
-    /*
-    private void addLog(String description) {
-        SimpleDateFormat sdf = new SimpleDateFormat(TIME_FORMAT, Locale.getDefault());
-        logsTextView.append(sdf.format(Calendar.getInstance().getTime()) + " " + description + "\r\n");
+    private void showToast(final String toastMsg) {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                Toast.makeText(getApplicationContext(), toastMsg, Toast.LENGTH_LONG).show();
+            }
+        });
     }
-
-     */
-
 }

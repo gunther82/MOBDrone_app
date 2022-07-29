@@ -84,8 +84,8 @@ public class CameraActivity extends AppCompatActivity {
 //    private static final String TAG = CameraActivity.class.getSimpleName();
     private static final String TAG = "CameraActivity";
 
-    private final String liveShowUrl = "rtmp://192.168.1.100/live/drone"; //stream TP-link
-//        private final String liveShowUrl = "rtmp://192.168.2.8/live/drone"; //RUBICON
+//    private final String liveShowUrl = "rtmp://192.168.1.100/live/drone"; //stream TP-link
+        private final String liveShowUrl = "rtmp://192.168.2.8/live/drone"; //RUBICON
 //    private final String liveShowUrl = "rtmp://192.168.200.22/live/drone"; //stream livorno
 //    private final String liveShowUrl = "rtmp://146.48.53.41/live/drone"; //stream remoto
 

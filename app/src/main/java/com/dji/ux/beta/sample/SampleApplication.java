@@ -27,6 +27,8 @@ import android.app.Application;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
+import android.util.Log;
 
 import androidx.multidex.MultiDex;
 
@@ -47,6 +49,7 @@ public class SampleApplication extends Application {
 
     private static Application app = null;
     private static BaseProduct product;
+    private static final String TAG = SampleApplication.class.getName();
 
     public static synchronized BaseProduct getProductInstance(){
         product = DJISDKManager.getInstance().getProduct();
@@ -66,6 +69,11 @@ public class SampleApplication extends Application {
         filter.addAction(ACCESSORY_ATTACHED);
         registerReceiver(br, filter);
         V_JsonUtil.DjiLog();
+
+        SharedPreferences sharedPreferences = getSharedPreferences(getString(R.string.my_pref), Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.putBoolean(getString(R.string.disableConsole), true);
+        editor.apply();
     }
 
     @Override
