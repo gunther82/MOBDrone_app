@@ -121,6 +121,7 @@ public class CameraActivity extends AppCompatActivity {
     private final float INTERDICTION_RADIUS = 20.0f;
     private DJICircle mCircle;
     private LatLng centerRadius;
+    private List<LatLng> centerRadiusList;
     private LatLng currentPersonPos;
 
     private LiveStreamManager.OnLiveChangeListener listener;
@@ -158,8 +159,9 @@ public class CameraActivity extends AppCompatActivity {
         SharedPreferences.Editor editor = sharedPreferences.edit();
         editor.putBoolean(getString(R.string.disableConsole), true);
         editor.apply();
+        centerRadiusList = new ArrayList<LatLng>();
 
-        double interdictionRadius = sharedPreferences.getFloat(getString(R.string.interdiction_area), INTERDICTION_RADIUS);
+                double interdictionRadius = sharedPreferences.getFloat(getString(R.string.interdiction_area), INTERDICTION_RADIUS);
 //        Toast.makeText(getApplicationContext(), "Interdiction radius: " + interdictionRadius, Toast.LENGTH_SHORT).show();
 
         widgetHeight = (int) getResources().getDimension(R.dimen.mini_map_height);
@@ -216,18 +218,7 @@ public class CameraActivity extends AppCompatActivity {
         stopSearch.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if(mPosMission.getHPState().equals(HotpointMissionState.EXECUTING.toString()) || mPosMission.getHPState().equals(HotpointMissionState.EXECUTION_PAUSED.toString())){
-                    Log.i(TAG, "Stopping HotpointMission and resuming WaypointMission...");
-                    mPosMission.stopHotPoint();
-                    deleteHotpoint();
-                    handleWPMissionButton();
-//                    mPointMission.createWaypointFromList(cleanedList);
-//                    mPointMission.configWaypointMission(waypointSpeed);
-//                    mPointMission.uploadAndStartWayPointMission();
-//                    while(!mPointMission.getWaypointMissionState().equals(WaypointMissionState.READY_TO_EXECUTE.toString())) {}
-//                    mPointMission.startWaypointMission();
-                    //stopSearch.setVisibility(View.GONE);
-                }
+                nextTarget();
             }
         });
 
@@ -258,7 +249,8 @@ public class CameraActivity extends AppCompatActivity {
         mapWidget.initGoogleMap(map -> {
             map.setMapType(GoogleMap.MAP_TYPE_HYBRID);
             //define home location as center radius
-            centerRadius = DroneState.getHomeLocation();
+            LatLng centerRadius = DroneState.getHomeLocation();
+            centerRadiusList.add(centerRadius);
             Log.i(TAG, "homeLocation " + centerRadius.toString());
             DJILatLng latLng = new DJILatLng(centerRadius.latitude, centerRadius.longitude);
             DJICircleOptions circleOptions = new DJICircleOptions().center(latLng)
@@ -436,7 +428,7 @@ public class CameraActivity extends AppCompatActivity {
     }
 
     private void handleSearchPerson() {
-        if(sharedPreferences.getString(getString(R.string.latitude_pos), "") == null || sharedPreferences.getString(getString(R.string.longitude_pos), "") == null) {
+        if(sharedPreferences.getString(getString(R.string.latitude_pos), "") == null || sharedPreferences.getString(getString(R.string.longitude_pos), "") == null || dialogCount != 0) {
             return;
         }
         double latNewPos = Double.parseDouble(sharedPreferences.getString(getString(R.string.latitude_pos), ""));
@@ -446,35 +438,63 @@ public class CameraActivity extends AppCompatActivity {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setMessage("A person has been detected in open sea.");
         builder.setCancelable(false);
-        builder.setNeutralButton("Ok", new DialogInterface.OnClickListener() {
+        builder.setPositiveButton("Confirm", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
+                Log.i(TAG, "Starting HotpointMission...");
                 dialog.dismiss();
                 dialogCount = 0;
+
+                drawHotpoint();
+                Log.i(TAG, mPosMission.getHPState());
+                mPosMission.startHotPoint(sharedPreferences);
+                //TODO capire a che serve questo sotto
+                if(mPosMission.getHPState().equals(HotpointMissionState.EXECUTING.toString())){
+                    stopSearch.setVisibility(View.VISIBLE);
+                }
             }
         });
+        builder.setNegativeButton("Skip", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                Log.i(TAG, "Skipping detected person and resuming WaypointMission");
+                dialog.dismiss();
+                dialogCount = 0;
 
+                //reload and restart WaypointMission
+                String wpState = mPointMission.getWaypointMissionState();
+                if(wpState.equals(WaypointMissionState.READY_TO_UPLOAD.toString())) {
+                    fromActivityToService("Re-starting interrupted WP Mission, current state: " + wpState);
+                    handleWPMissionButton();
+                    Log.i(TAG, "Restarted WaypointMission");
+                }
+                else {
+                    Log.i(TAG, "ERROR: Couldn't restart WaypointMission because its state is : " + wpState);
+                    setResultToToast("ERROR: Couldn't restart WaypointMission because its state is : " + wpState);
+                }
+            }
+        });
 
         builder.setIcon(R.drawable.ic_noun_drrowning);
         builder.setTitle("Person Detected!");
         AlertDialog alert = builder.create();
 
-        if(ckeckPersonInRadius(centerRadius, currentPersonPos)){
+//        if(ckeckPersonInRadius(centerRadius, currentPersonPos)){
+        if(ckeckPersonInRadiusList(currentPersonPos)){
             if (dialogCount == 0) {
                 alert.show();
                 dialogCount = 1;
             }
+
+            //TODO create interdiction zone and add it to interdiction list, continue wpmission
+//            centerRadius = currentPersonPos; //TODO renderla una lista
+            centerRadiusList.add(currentPersonPos);
+
+            //stop WaypointMission and delete visited waypoints
             if(mPointMission.getWaypointMissionState().equals(WaypointMissionState.EXECUTING.toString())){
                 mPointMission.stopWaypointMission();
                 deletePositionsCount();
             }
-            drawHotpoint();
-            Log.i(TAG, mPosMission.getHPState());
-            mPosMission.startHotPoint(sharedPreferences);
-            if(mPosMission.getHPState().equals(HotpointMissionState.EXECUTING.toString())){
-                stopSearch.setVisibility(View.VISIBLE);
-            }
-            centerRadius = currentPersonPos; //TODO renderla una lista
         }
         else {
             Toast.makeText(this, "Found person in no-go zone", Toast.LENGTH_SHORT).show();
@@ -489,6 +509,20 @@ public class CameraActivity extends AppCompatActivity {
             return false;
         } else {
             mCircle.remove();
+        }
+        return true;
+    }
+
+    private boolean ckeckPersonInRadiusList(LatLng newPos){
+        double distanceMeters;
+        double interdictionRadius = sharedPreferences.getFloat(getString(R.string.interdiction_area), INTERDICTION_RADIUS);
+
+        for (LatLng pos : centerRadiusList) {
+            distanceMeters = SphericalUtil.computeDistanceBetween(pos, newPos);
+            if(distanceMeters < interdictionRadius) {
+                mCircle.remove();
+                return false;
+            }
         }
         return true;
     }
@@ -586,7 +620,7 @@ public class CameraActivity extends AppCompatActivity {
         if(wpState.equals(WaypointMissionState.EXECUTING.toString())) {
             return WAYPOINT_MISSION;
         }
-        if(hpState.equals(HotpointMissionState.EXECUTING.toString())) {
+        if(hpState.equals(HotpointMissionState.INITIAL_PHASE.toString()) || hpState.equals(HotpointMissionState.EXECUTING.toString())) {
             return HOTPOINT_MISSION;
         }
         if(followState.equals(FollowMeMissionState.EXECUTING.toString())) {
@@ -602,13 +636,22 @@ public class CameraActivity extends AppCompatActivity {
         if(wpState.equals(WaypointMissionState.EXECUTING.toString()) || wpState.equals(WaypointMissionState.EXECUTION_PAUSED.toString())) {
             return WAYPOINT_MISSION;
         }
-        if(hpState.equals(HotpointMissionState.EXECUTING.toString()) || hpState.equals(HotpointMissionState.EXECUTION_PAUSED.toString())) {
+        if(hpState.equals(HotpointMissionState.INITIAL_PHASE.toString()) || hpState.equals(HotpointMissionState.EXECUTING.toString()) || hpState.equals(HotpointMissionState.EXECUTION_PAUSED.toString())) {
             return HOTPOINT_MISSION;
         }
         if(followState.equals(FollowMeMissionState.EXECUTING.toString())) {
             return FOLLOW_MISSION;
         }
         return NO_MISSION;
+    }
+
+    private void nextTarget() {
+        if(mPosMission.getHPState().equals(HotpointMissionState.INITIAL_PHASE.toString()) || mPosMission.getHPState().equals(HotpointMissionState.EXECUTING.toString()) || mPosMission.getHPState().equals(HotpointMissionState.EXECUTION_PAUSED.toString())){
+            Log.i(TAG, "Stopping HotpointMission and resuming WaypointMission...");
+            mPosMission.stopHotPoint();
+            deleteHotpoint();
+            handleWPMissionButton();
+        }
     }
 
     private void handleMission(String action){
@@ -620,19 +663,6 @@ public class CameraActivity extends AppCompatActivity {
                 Toast.makeText(this, "WP speed: " + waypointSpeed, Toast.LENGTH_SHORT).show();
                 mPointMission.setWaypointMissionSpeed(waypointSpeed);
                 break;
-//            case "coordinates_wp": //not used
-//                //handleWPMissionButton();
-//                //drawWayPoint(GPSPlancia.getGPSPlanciaList());
-//                mPointMission.createWaypoint(sharedPreferences);
-//                fromActivityToService("Mission State: " + mPointMission.getWaypointMissionState());
-//                Log.i(TAG, "coordinates_wp " + mPointMission.getWaypointMissionState());
-//                break;
-//            case "upload_waypoint": //not used
-//                //mPointMission.configWaypointMission(waypointSpeed);
-//                mPointMission.uploadWayPointMission();
-//                fromActivityToService("Mission State: " + mPointMission.getWaypointMissionState());
-//                Log.i(TAG, "upload_mission " + mPointMission.getWaypointMissionState());
-//                break;
             case "start_waypoint_list":
                 fromActivityToService("Uploading and starting WP Mission, current state: " + mPointMission.getWaypointMissionState());
                 handleWPMissionButton();
@@ -719,8 +749,10 @@ public class CameraActivity extends AppCompatActivity {
                 drawHotpoint();
                 mPosMission.startHotPoint(sharedPreferences);
                 break;
+            case "next_target":
+                nextTarget();
+                break;
             case "person": //from jetson when detected a person
-                Log.i(TAG, "Received person from jetson");
                 handleSearchPerson();
                 break;
             case "warning":

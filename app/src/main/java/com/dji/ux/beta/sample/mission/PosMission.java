@@ -41,10 +41,8 @@ public class PosMission {
         this.mContext = mContext;
     }
 
-    private void setResultToToastCallback(Context mContext, String s) {
-        Looper.prepare();
-        Toast.makeText(mContext, s, Toast.LENGTH_SHORT).show();
-        Looper.loop();
+    private void setResultToToast(String s) {
+        ToastUtils.setResultToToast(s);
     }
 
     public HotpointMissionOperator getHotpointM(){
@@ -80,11 +78,12 @@ public class PosMission {
 
         @Override
         public void onExecutionStart() {
+
         }
 
         @Override
         public void onExecutionFinish(@Nullable DJIError djiError) {
-            ToastUtils.setResultToToast("Execution of HotpointMission finished: " + (djiError == null ? "Success!" : djiError.getDescription()));
+            setResultToToast("HotpointMission finished: " + (djiError == null ? "Success!" : djiError.getDescription()));
         }
     };
 
@@ -108,10 +107,10 @@ public class PosMission {
                 public void onResult(DJIError djiError) {
                     if (djiError != null) {
                         Log.i(TAG, "Error while starting HotpointMission, current state: " + getHPState() + ", ERROR: " + djiError.getDescription());
-                        setResultToToastCallback(mContext, "Could not start hotpoint mission: " + djiError.getDescription());
+                        setResultToToast("Could not start hotpoint mission: " + djiError.getDescription());
                     } else {
                         Log.i(TAG, "HotpointMission started Successfully! Current state: " + getHPState());
-                        setResultToToastCallback(mContext, "HotpointMission started Successfully!");
+                        setResultToToast("HotpointMission started Successfully!");
                         //TODO: inviare alla plancia
                     }
                 }
@@ -125,12 +124,11 @@ public class PosMission {
                 @Override
                 public void onResult(DJIError djiError) {
                     Log.i(TAG, "HotpointMission Paused: " + (djiError == null ? "Successfully" : djiError.getDescription()));
-                    setResultToToastCallback(mContext,"HotpointMission Paused: " + (djiError == null ? "Successfully" : djiError.getDescription()));
-                    //TODO: inviare alla plancia
+                    setResultToToast("HotpointMission Paused: " + (djiError == null ? "Successfully" : djiError.getDescription()));
                 }
             });
         } else {
-            ToastUtils.setResultToToast("Couldn't pause HotpointMission because state is not executing, current state: " + getHPState());
+            setResultToToast("Couldn't pause HotpointMission because state is not executing, current state: " + getHPState());
         }
     }
 
@@ -140,28 +138,26 @@ public class PosMission {
                 @Override
                 public void onResult(DJIError djiError) {
                     Log.i(TAG, "HotpointMission Resumed: " + (djiError == null ? "Successfully" : djiError.getDescription()));
-                    setResultToToastCallback(mContext,"HotpointMission Resumed: " + (djiError == null ? "Successfully" : djiError.getDescription()));
-                    //TODO: inviare alla plancia
+                    setResultToToast("HotpointMission Resumed: " + (djiError == null ? "Successfully" : djiError.getDescription()));
                 }
             });
         } else {
-            ToastUtils.setResultToToast("Couldn't resume HotpointMission because state is not paused, current state: " + getHPState());
+            setResultToToast("Couldn't resume HotpointMission because state is not paused, current state: " + getHPState());
         }
     }
 
     public void stopHotPoint(){
-        if (getHPState().equals(WaypointMissionState.EXECUTING.toString()) || getHPState().equals(WaypointMissionState.EXECUTION_PAUSED.toString())){
+        if (getHPState().equals(WaypointMissionState.INITIAL_PHASE.toString()) || getHPState().equals(WaypointMissionState.EXECUTING.toString()) || getHPState().equals(WaypointMissionState.EXECUTION_PAUSED.toString())){
             getHotpointM().stop(new CommonCallbacks.CompletionCallback() {
                 @Override
                 public void onResult(DJIError djiError) {
                     Log.i(TAG, "HotpointMission Stopped: " + (djiError == null ? "Successfully" : djiError.getDescription()));
-                    setResultToToastCallback(mContext,"HotpointMission Stopped: " + (djiError == null ? "Successfully" : djiError.getDescription()));
-                    //TODO: inviare alla plancia
+                    setResultToToast("HotpointMission Stopped: " + (djiError == null ? "Successfully" : djiError.getDescription()));
                 }
             });
         }
         else {
-            ToastUtils.setResultToToast("Couldn't stop HotpointMission because state is not executing or paused, current state: " + getHPState());
+            setResultToToast("Couldn't stop HotpointMission because state is not executing or paused, current state: " + getHPState());
         }
     }
 }

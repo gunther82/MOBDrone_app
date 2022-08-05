@@ -295,9 +295,6 @@ public class TcpClientService extends Service {
             case "warning":
                 setWarning(editor);
                 break;
-            case "next_target":
-                //TODO: skip current target and resume search
-                break;
             case "waypoint_coordinates":
                 //setCoordinate(editor);
                 request[1] = request[1].replace(",", ".");
@@ -314,6 +311,7 @@ public class TcpClientService extends Service {
             case "update_coordinates":
                 request[1] = request[1].replace(",", ".");
                 request[2] = request[2].replace(",", ".");
+//                Log.i(TAG, "Converted update coordinates: " + request[1] + ", " + request[2]);
                 updateFMCoordinate(editor);
                 //fromServiceToActivity(ACTION, KEY, "start_follow"); //TODO: cambiare MSG, serve un msg?
                 break;
