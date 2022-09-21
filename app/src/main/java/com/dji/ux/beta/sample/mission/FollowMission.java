@@ -20,18 +20,25 @@ import com.dji.mapkit.core.models.DJIBitmapDescriptorFactory;
 import com.dji.mapkit.core.models.DJILatLng;
 import com.dji.mapkit.core.models.annotations.DJIMarkerOptions;
 import com.dji.ux.beta.sample.R;
+import com.dji.ux.beta.sample.SampleApplication;
 import com.dji.ux.beta.sample.utils.DroneState;
 import com.dji.ux.beta.sample.utils.ToastUtils;
 
+import org.jetbrains.annotations.NotNull;
+
 import dji.common.error.DJIError;
+import dji.common.flightcontroller.FlightControllerState;
 import dji.common.mission.followme.FollowMeHeading;
 import dji.common.mission.followme.FollowMeMission;
 import dji.common.mission.followme.FollowMeMissionEvent;
 import dji.common.mission.followme.FollowMeMissionState;
 import dji.common.model.LocationCoordinate2D;
 import dji.common.util.CommonCallbacks;
+import dji.sdk.base.BaseProduct;
+import dji.sdk.flightcontroller.FlightController;
 import dji.sdk.mission.followme.FollowMeMissionOperator;
 import dji.sdk.mission.followme.FollowMeMissionOperatorListener;
+import dji.sdk.products.Aircraft;
 import dji.sdk.sdkmanager.DJISDKManager;
 import dji.ux.beta.map.widget.map.MapWidget;
 
@@ -44,6 +51,7 @@ public class FollowMission {
     private double latitude;
     private double longitude;
     Thread locationUpdateThread;
+    private boolean missionRunning = false;
 
     //TODO: disegnare icona nave che si muove quando cambia posizione
 
@@ -90,9 +98,10 @@ public class FollowMission {
 
         @Override
         public void onExecutionFinish(@Nullable DJIError djiError) {
+//            locationUpdateThread.interrupt();
+            missionRunning = false;
             Log.i(TAG, "FollowMission Execution finished: " + (djiError == null ? "Success!" : djiError.getDescription()));
             setResultToToast("FollowMission Execution finished: " + (djiError == null ? "Success!" : djiError.getDescription()));
-            locationUpdateThread.interrupt();
         }
     };
 
@@ -115,12 +124,14 @@ public class FollowMission {
                 @Override
                 public void onResult(DJIError djiError) {
                     if(djiError==null){
+                        missionRunning = true;
 //                        setResultToToast("Follow mission created successfully, starting follow thread...");
                         Log.i(TAG,  "Follow mission created successfully with location destination: " + getFollowM().getFollowingTarget() + ", starting follow thread...");
                         locationUpdateThread = new Thread(new Runnable() {
                             @Override
                             public void run() {
-                                while (!Thread.currentThread().isInterrupted()) {
+//                                while (!Thread.currentThread().isInterrupted()) {
+                                while (missionRunning) {
 //                                    if(getFollowState().equals(FollowMeMissionState.EXECUTING.toString()))
 //                                    {
                                         latitude = Double.parseDouble(preferences.getString(mContext.getString(R.string.latitude_fm), ""));
@@ -142,13 +153,14 @@ public class FollowMission {
                                         });
                                         try {
                                             //TODO: cambiare millisecondi in sleep (consigliati 10Hz)
-                                            Thread.sleep(1000);
+                                            Thread.sleep(1500);
                                         } catch (InterruptedException e) {
                                             e.printStackTrace();
                                             Thread.currentThread().interrupt();
                                         }
                                     }
 //                                }
+                                Log.i(TAG, "Update thread ended.");
                             }
                         });
                         locationUpdateThread.start();

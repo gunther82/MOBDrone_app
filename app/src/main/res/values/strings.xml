@@ -30,6 +30,10 @@
     <string name="longitude_fm">longitude follow</string>
     <string name="altitude_fm">altitude follow</string>
 
+    <string name="latitude_ship">latitude ship</string>
+    <string name="longitude_ship">longitude ship</string>
+    <string name="altitude_ship">altitude ship</string>
+
     <string name="latitude_pos">latitude hotpoint</string>
     <string name="longitude_pos">longitude hotpoint</string>
     <string name="altitude_pos">altitude hotpoint</string>

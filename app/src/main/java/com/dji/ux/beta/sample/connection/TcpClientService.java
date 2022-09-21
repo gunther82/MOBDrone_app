@@ -308,6 +308,12 @@ public class TcpClientService extends Service {
                 setFMCoordinate(editor);
                 fromServiceToActivity(ACTION, KEY, "start_follow");
                 break;
+            case "go_to_ship":
+                request[1] = request[1].replace(",", ".");
+                request[2] = request[2].replace(",", ".");
+                setShipCoordinate(editor);
+                fromServiceToActivity(ACTION, KEY, "go_ship");
+                break;
             case "update_coordinates":
                 request[1] = request[1].replace(",", ".");
                 request[2] = request[2].replace(",", ".");
@@ -388,10 +394,17 @@ public class TcpClientService extends Service {
         editor.apply();
     }
 
+    private void setShipCoordinate(SharedPreferences.Editor editor){
+        editor.putString(getString(R.string.latitude_ship), request[1]);
+        editor.putString(getString(R.string.longitude_ship), request[2]);
+        editor.putString(getString(R.string.altitude_ship), request[3]);
+        editor.apply();
+    }
+
     private void updateFMCoordinate(SharedPreferences.Editor editor){
-        //TODO check if the replace is needed or not
-        request[1] = request[1].replace(",", ".");
-        request[2] = request[2].replace(",", ".");
+//        //TODO check if the replace is needed or not
+//        request[1] = request[1].replace(",", ".");
+//        request[2] = request[2].replace(",", ".");
         editor.putString(getString(R.string.latitude_fm), request[1]);
         editor.putString(getString(R.string.longitude_fm), request[2]);
         editor.apply();

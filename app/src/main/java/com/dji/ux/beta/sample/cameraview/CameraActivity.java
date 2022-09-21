@@ -19,6 +19,7 @@ import android.view.animation.Animation;
 import android.view.animation.Transformation;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.constraintlayout.widget.ConstraintLayout;
@@ -34,16 +35,18 @@ import com.dji.mapkit.core.models.annotations.DJICircleOptions;
 import com.dji.mapkit.core.models.annotations.DJIMarker;
 import com.dji.mapkit.core.models.annotations.DJIMarkerOptions;
 import com.dji.ux.beta.sample.R;
+import com.dji.ux.beta.sample.SampleApplication;
 import com.dji.ux.beta.sample.mission.FollowMission;
 import com.dji.ux.beta.sample.mission.GPSPlancia;
 import com.dji.ux.beta.sample.mission.PointMission;
 import com.dji.ux.beta.sample.mission.PosMission;
 import com.dji.ux.beta.sample.utils.DroneState;
-import com.dji.ux.beta.sample.utils.ToastUtils;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.maps.android.SphericalUtil;
+
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -52,10 +55,14 @@ import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 import dji.common.airlink.PhysicalSource;
+import dji.common.flightcontroller.FlightControllerState;
 import dji.common.flightcontroller.flyzone.FlyZoneCategory;
 import dji.common.mission.followme.FollowMeMissionState;
 import dji.common.mission.hotpoint.HotpointMissionState;
 import dji.common.mission.waypoint.WaypointMissionState;
+import dji.sdk.base.BaseProduct;
+import dji.sdk.flightcontroller.FlightController;
+import dji.sdk.products.Aircraft;
 import dji.sdk.sdkmanager.DJISDKManager;
 import dji.sdk.sdkmanager.LiveStreamManager;
 import dji.sdk.sdkmanager.LiveVideoBitRateMode;
@@ -530,34 +537,12 @@ public class CameraActivity extends AppCompatActivity {
     //remove all waypoints from waypointMissionBuilder (and set it tu null), from GPSPlancia and all markers on GUI
     private void deletePositions(){
         mPointMission.deleteWaypoint(); //remove visited waypoints from waypointMissionBuilder and set it tu null
-//        runOnUiThread(new Runnable() {
-//            @Override
-//            public void run() {
-//                if(mapWidget.getMap()!=null && listMarker!= null) {
-//                    for(DJIMarker marker : listMarker){ //remove all markers on GUI
-//                        marker.remove();
-//                    }
-//                }
-//            }
-//        });
         deleteMarkers();
     }
 
     //remove all waypoints from waypointMissionBuilder and only visited waypoints from GPSPlancia and visited markers on GUI
     private void deletePositionsCount(){
         mPointMission.deleteWPCount(); //remove all waypoints from waypointMissionBuilder and visited waypoints from GPSPlancia
-//        runOnUiThread(new Runnable() {
-//            @Override
-//            public void run() {
-//                //remove markers on GUI
-//                if(mapWidget.getMap()!=null && listMarker!= null) {
-//                    for(DJIMarker marker : listMarker){ //remove all markers on GUI
-//                        marker.remove();
-//                    }
-//                }
-//
-//            }
-//        });
         deleteMarkers();
     }
 
@@ -651,6 +636,73 @@ public class CameraActivity extends AppCompatActivity {
             mPosMission.stopHotPoint();
             deleteHotpoint();
             handleWPMissionButton();
+        }
+    }
+
+    private String droneLat;
+    private String droneLon;
+    private String droneAlt;
+
+    private void getDroneLocation() {
+        BaseProduct product = SampleApplication.getProductInstance();
+        FlightController flightController = null;
+        if (product != null && product.isConnected()) {
+
+            if (product instanceof Aircraft) { flightController = ((Aircraft) product).getFlightController(); }
+
+            if (flightController !=null){
+                flightController.setStateCallback(new FlightControllerState.Callback() {
+                    @Override
+                    public void onUpdate(@NonNull @NotNull FlightControllerState flightControllerState) {
+
+                        if (flightControllerState.getAircraftLocation() != null) {
+                            if(!Double.isNaN(flightControllerState.getAircraftLocation().getLatitude()) && !Double.isNaN(flightControllerState.getAircraftLocation().getLongitude())) {
+                                droneLat = String.valueOf(flightControllerState.getAircraftLocation().getLatitude());
+                                droneLon = String.valueOf(flightControllerState.getAircraftLocation().getLongitude());
+                                droneAlt = String.valueOf(flightControllerState.getAircraftLocation().getAltitude());
+                            } else {
+                                droneLat = "0.0";
+                                droneLon = "0.0";
+                                droneAlt = "0.0";
+                            }
+                        }
+                    }
+                });
+            }
+        }
+    }
+
+    private void goToShip() {
+        String latitude = sharedPreferences.getString(getString(R.string.latitude_ship), "");
+        String longitude = sharedPreferences.getString(getString(R.string.longitude_ship), "");
+        String altitude = sharedPreferences.getString(getString(R.string.altitude_ship), "20.0f");
+
+        int mission = getExecutingOrPausedMission();
+        switch (mission) {
+            case WAYPOINT_MISSION:
+                Log.i(TAG, "Can't go to specified ship position because WaypointMission is running.");
+                setResultToToast("Can't go to specified ship position because WaypointMission is running.");
+                break;
+            case HOTPOINT_MISSION:
+                Log.i(TAG, "Can't go to specified ship position because HotpointMission is running.");
+                setResultToToast("Can't go to specified ship position because HotpointMission is running.");
+                break;
+            case FOLLOW_MISSION:
+                Log.i(TAG, "Can't go to specified ship position because FollowMission is running.");
+                setResultToToast("Can't go to specified ship position because FollowMission is running.");
+                break;
+            case NO_MISSION:
+                Log.i(TAG, "Going to ship at the given coordinates: " + latitude + ", " + longitude + ", altitude: " + altitude);
+                setResultToToast("Going to ship's location...");
+
+                while(droneAlt == null || droneLat == null || droneLon == null) {
+                    getDroneLocation();
+                }
+                Log.i(TAG, "droneLat: " + droneLat + ", droneLon: " + droneLon +  ", droneAlt: " + droneAlt);
+                GPSPlancia.populateGPSPlancia(droneLat, droneLon, droneAlt);
+                GPSPlancia.populateGPSPlancia(latitude, longitude, altitude);
+                handleWPMissionButton();
+                break;
         }
     }
 
@@ -751,6 +803,10 @@ public class CameraActivity extends AppCompatActivity {
                 break;
             case "next_target":
                 nextTarget();
+                break;
+            case "go_ship":
+                getDroneLocation();
+                goToShip();
                 break;
             case "person": //from jetson when detected a person
                 handleSearchPerson();
