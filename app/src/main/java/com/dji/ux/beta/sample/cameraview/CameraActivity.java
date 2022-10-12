@@ -91,10 +91,10 @@ public class CameraActivity extends AppCompatActivity {
 //    private static final String TAG = CameraActivity.class.getSimpleName();
     private static final String TAG = "CameraActivity";
 
-//    private final String liveShowUrl = "rtmp://192.168.1.100/live/drone"; //stream TP-link
-        private final String liveShowUrl = "rtmp://192.168.2.8/live/drone"; //RUBICON
+    private final String liveShowUrl = "rtmp://192.168.1.100/live/drone"; //stream TP-link
+//        private final String liveShowUrl = "rtmp://192.168.2.8/live/drone"; //RUBICON
 //    private final String liveShowUrl = "rtmp://192.168.200.22/live/drone"; //stream livorno
-//    private final String liveShowUrl = "rtmp://146.48.53.41/live/drone"; //stream remoto
+//    private final String liveShowUrl = "rtmp://146.48.39.44/live/drone"; //stream remoto
 
     private final String ACTION = "FROM CAMERA";
 
@@ -141,6 +141,8 @@ public class CameraActivity extends AppCompatActivity {
     private final PosMission mPosMission = new PosMission(this);
 
     private List<DJIMarker> listMarker = new ArrayList<>();
+
+    private boolean personNotificationEnabled = false;
 
     //TODO: settare button a non clickable quando drone non connesso
     //TODO: sistemare le icone nella top bar (troppo piccole)
@@ -404,7 +406,7 @@ public class CameraActivity extends AppCompatActivity {
         mCircle.remove();
     }
 
-    private void handleWPMissionButton(){
+    private void handleWPMissionButton(boolean personNotification){
         if(mPointMission.getWaypointMissionState().equals(WaypointMissionState.EXECUTING.toString())){
             Toast.makeText(this, "WaypointMission already running!", Toast.LENGTH_SHORT).show();
         }
@@ -425,13 +427,10 @@ public class CameraActivity extends AppCompatActivity {
             mPointMission.createWaypointFromList(cleanedList);
             mPointMission.configWaypointMission(waypointSpeed);
             mPointMission.uploadAndStartWayPointMission();
+            personNotificationEnabled = personNotification;
 //            while(!mPointMission.getWaypointMissionState().equals(WaypointMissionState.READY_TO_EXECUTE.toString())) {}
 //            mPointMission.startWaypointMission();
         }
-    }
-
-    private void confirmSearchPerson() {
-
     }
 
     private void handleSearchPerson() {
@@ -472,7 +471,7 @@ public class CameraActivity extends AppCompatActivity {
                 String wpState = mPointMission.getWaypointMissionState();
                 if(wpState.equals(WaypointMissionState.READY_TO_UPLOAD.toString())) {
                     fromActivityToService("Re-starting interrupted WP Mission, current state: " + wpState);
-                    handleWPMissionButton();
+                    handleWPMissionButton(true);
                     Log.i(TAG, "Restarted WaypointMission");
                 }
                 else {
@@ -493,8 +492,8 @@ public class CameraActivity extends AppCompatActivity {
                 dialogCount = 1;
             }
 
-            //TODO create interdiction zone and add it to interdiction list, continue wpmission
-//            centerRadius = currentPersonPos; //TODO renderla una lista
+            //create interdiction zone and add it to interdiction list, continue wpmission
+//            centerRadius = currentPersonPos;
             centerRadiusList.add(currentPersonPos);
 
             //stop WaypointMission and delete visited waypoints
@@ -534,16 +533,22 @@ public class CameraActivity extends AppCompatActivity {
         return true;
     }
 
+    public void setPersonNotification(boolean status) {
+        this.personNotificationEnabled = status;
+    }
+
     //remove all waypoints from waypointMissionBuilder (and set it tu null), from GPSPlancia and all markers on GUI
     private void deletePositions(){
         mPointMission.deleteWaypoint(); //remove visited waypoints from waypointMissionBuilder and set it tu null
         deleteMarkers();
+        centerRadiusList.clear();
     }
 
     //remove all waypoints from waypointMissionBuilder and only visited waypoints from GPSPlancia and visited markers on GUI
     private void deletePositionsCount(){
         mPointMission.deleteWPCount(); //remove all waypoints from waypointMissionBuilder and visited waypoints from GPSPlancia
         deleteMarkers();
+        personNotificationEnabled = false;
     }
 
     public void deleteMarkers() {
@@ -635,7 +640,7 @@ public class CameraActivity extends AppCompatActivity {
             Log.i(TAG, "Stopping HotpointMission and resuming WaypointMission...");
             mPosMission.stopHotPoint();
             deleteHotpoint();
-            handleWPMissionButton();
+            handleWPMissionButton(true);
         }
     }
 
@@ -701,7 +706,7 @@ public class CameraActivity extends AppCompatActivity {
                 Log.i(TAG, "droneLat: " + droneLat + ", droneLon: " + droneLon +  ", droneAlt: " + droneAlt);
                 GPSPlancia.populateGPSPlancia(droneLat, droneLon, droneAlt);
                 GPSPlancia.populateGPSPlancia(latitude, longitude, altitude);
-                handleWPMissionButton();
+                handleWPMissionButton(false);
                 break;
         }
     }
@@ -717,7 +722,7 @@ public class CameraActivity extends AppCompatActivity {
                 break;
             case "start_waypoint_list":
                 fromActivityToService("Uploading and starting WP Mission, current state: " + mPointMission.getWaypointMissionState());
-                handleWPMissionButton();
+                handleWPMissionButton(true);
 //                Log.i(TAG, "After handleWPMissionButton, current state: " + mPointMission.getWaypointMissionState());
                 break;
             case "start_waypoint":
@@ -732,7 +737,7 @@ public class CameraActivity extends AppCompatActivity {
                 }
                 if(wpState.equals(WaypointMissionState.READY_TO_UPLOAD.toString())) {
                     fromActivityToService("Re-starting interrupted WP Mission, current state: " + wpState);
-                    handleWPMissionButton();
+                    handleWPMissionButton(true);
                     Log.i(TAG, "Restarted WaypointMission");
                 }
                 break;
@@ -809,7 +814,8 @@ public class CameraActivity extends AppCompatActivity {
                 goToShip();
                 break;
             case "person": //from jetson when detected a person
-                handleSearchPerson();
+                if(personNotificationEnabled)
+                    handleSearchPerson();
                 break;
             case "warning":
                 String warning = sharedPreferences.getString(getString(R.string.warning), "");

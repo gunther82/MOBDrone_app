@@ -133,6 +133,7 @@ public class PointMission {
 
                 CameraActivity activity = (CameraActivity) mContext;
                 activity.deleteMarkers();
+                activity.setPersonNotification(false);
             }
 //            waypointMissionBuilder = null;
             nextWaypointIndex = -1;

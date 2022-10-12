@@ -43,8 +43,8 @@ public class TcpClientService extends Service {
 //    private Handler handler = new Handler();
     BufferedReader bufferedReader;//Declare the input stream object
     OutputStream outputStream;//Declare the output stream object
-//    public final String _ip = "192.168.1.103"; //console TP-link
-    public final String _ip = "192.168.2.5"; //console RUBICON
+    public final String _ip = "192.168.1.104"; //console TP-link
+//    public final String _ip = "192.168.2.5"; //console RUBICON
 //    public final String _ip = "192.168.200.185"; //console livorno
 //    public final String _ip = "213.82.97.234"; //console livorno remoto
     //public final String _ip = "192.168.1.105"; //localhost plancia
@@ -59,10 +59,10 @@ public class TcpClientService extends Service {
     private Thread connectThreadJetson;
     BufferedReader bufferedReaderJetson; //Declare the input stream object
     OutputStream outputStreamJetson; //Declare the output stream object
-//    public final String _ipJetson = "192.168.1.100"; //python jetson TP-link
-    public final String _ipJetson = "192.168.2.8"; //python jetson RUBICON
+    public final String _ipJetson = "192.168.1.100"; //python jetson TP-link
+//    public final String _ipJetson = "192.168.2.8"; //python jetson RUBICON
 //    public final String _ipJetson = "192.168.200.22"; //python jetson livorno
-//    public final String _ipJetson = "146.48.53.41"; //python jetson remoto
+//    public final String _ipJetson = "146.48.39.44"; //python jetson remoto
     private final String portJetson = "65432"; //port python
 
     private String[] request;
@@ -348,6 +348,7 @@ public class TcpClientService extends Service {
 
     private void setInterdictionRadius(SharedPreferences.Editor editor){
         Log.i(TAG, "New interdiction radius: " + request[1]);
+        request[1] = request[1].replace(",", ".");
         if(isNumeric(request[1])){
 //            CameraActivity.setInterdictionRadius(Float.parseFloat(request[1]));
 
